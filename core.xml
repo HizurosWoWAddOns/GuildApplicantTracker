@@ -1,0 +1,224 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
+..\..\FrameXML\UI.xsd">
+
+	<Script file="core.lua"/>
+	<!--
+	<Script file="optionpanel .lua" />
+	-->
+	<Script file="chatcommand.lua" />
+
+	<Font name="GuildApplicantTrackerFont_Realm" virtual="true" inherits="SystemFont_Tiny">
+		<Color r="1.0" g="0.82" b="0"/>
+	</Font>
+
+	<Font name="GuildApplicantTrackerFont_Invite" virtual="true" inherits="SystemFont_Shadow_Small">
+		<Color r="0" g="0.8" b="1"/>
+	</Font>
+
+	<Font name="GuildApplicantTrackerFont_Decline" virtual="true" inherits="SystemFont_Shadow_Small">
+		<Color r="1.0" g="0.2" b="0.2"/>
+	</Font>
+
+	<Font name="GuildApplicantTrackerFont_HighlightInvite" virtual="true" inherits="SystemFont_Shadow_Small">
+		<Color r="0.4" g="1" b="1"/>
+	</Font>
+
+	<Font name="GuildApplicantTrackerFont_HighlightDecline" virtual="true" inherits="SystemFont_Shadow_Small">
+		<Color r="1.0" g="0.6" b="0.6"/>
+	</Font>
+
+	<Texture name="GuildApplicantTrackerIcons" file="Interface\Addons\GuildApplicantTracker\media\ApplicantDeselectedIcons" virtual="true"> 
+		<Size x="16" y="16" />
+	</Texture>
+
+	<Button name="GuildApplicantTrackerPushButtonTemplate" virtual="true">
+		<Size x="64" y="22"/>
+		<ButtonText name="$parentText" parentKey="Text" justifyH="RIGHT"/>
+		<NormalFont style="GameFontNormalSmall" />
+		<HighlightFont style="GameFontHighlightSmall"/>
+		<DisabledFont style="GameFontDisableSmall"/>
+		<HighlightTexture file="Interface\Buttons\UI-Silver-Button-Highlight" alphaMode="ADD" alpha="0.7">
+			<TexCoords left="0" right="1.0" top="0.03" bottom="0.7175"/>
+		</HighlightTexture>
+		<Scripts>
+			<OnEnter function="GuildApplicantTrackerTooltip_OnEnter" />
+			<OnLeave function="GuildApplicantTrackerTooltip_OnLeave" />
+		</Scripts>
+	</Button>
+
+	<Button name="GuildApplicantTrackerEntryTemplate" hidden="true" virtual="true">
+		<Size x="0" y="40" />
+		<Anchors>
+			<Anchor point="LEFT" />
+			<Anchor point="RIGHT" />
+		</Anchors>
+		<Backdrop bgFile="Interface\Buttons\UI-SliderBar-Background" tile="true">
+			<EdgeSize val="8"/>
+			<TileSize val="8"/>
+			<BackgroundInsets left="0" right="0" top="0" bottom="0"/>
+		</Backdrop>
+		<Layers>
+			<Layer level="BORDER">
+				<Texture parentKey="Class" file="Interface\WorldStateFrame\Icons-Classes">
+					<Size x="40" y="40"/>
+					<Anchors> <Anchor point="LEFT" x="0" /> </Anchors>
+					<TexCoords left=".75" right="1" top=".75" bottom="1" />
+				</Texture>
+			</Layer>
+			<Layer level="ARTWORK">
+				<FontString parentKey="Level" inherits="GameFontNormal">
+					<Anchors> <Anchor point="TOPLEFT" x="43" y="-1" /> </Anchors>
+				</FontString>
+				<FontString parentKey="Name" inherits="GameFontNormal">
+					<Anchors> <Anchor point="LEFT" relativeKey="$parent.Level" relativePoint="RIGHT" x="3"/> </Anchors>
+				</FontString>
+				<FontString parentKey="Realm" inherits="GuildApplicantTrackerFont_Realm">
+					<Anchors> <Anchor point="TOPLEFT" relativeKey="$parent.Name" relativePoint="BOTTOMLEFT" /> </Anchors>
+				</FontString>
+				<FontString parentKey="Status" inherits="GameFontNormalSmall">
+					<Anchors> <Anchor point="RIGHT" x="-8" y="10" /> </Anchors>
+				</FontString>
+				<Texture parentKey="bTank" inherits="GuildApplicantTrackerIcons">
+					<Anchors> <Anchor point="BOTTOMLEFT" x="40" /> </Anchors>
+					<TexCoords left="0" right=".31" top=".33" bottom=".66" />
+				</Texture>
+				<Texture parentKey="bHealer" inherits="GuildApplicantTrackerIcons">
+					<Anchors> <Anchor point="LEFT" relativeKey="$parent.bTank" relativePoint="RIGHT" /> </Anchors>
+					<TexCoords left=".31" right=".61" top="0" bottom=".33" />
+				</Texture>
+				<Texture parentKey="bDamage" inherits="GuildApplicantTrackerIcons">
+					<Anchors> <Anchor point="LEFT" relativeKey="$parent.bHealer" relativePoint="RIGHT" /> </Anchors>
+					<TexCoords left=".31" right=".61" top=".33" bottom=".66" />
+				</Texture>
+				<Texture parentKey="bQuest" inherits="GuildApplicantTrackerIcons">
+					<Anchors> <Anchor point="LEFT" relativeKey="$parent.bDamage" relativePoint="RIGHT" x="8"/> </Anchors>
+					<TexCoords left=".62" right=".94" top="0" bottom=".31" />
+				</Texture>
+				<Texture parentKey="bDungeon" inherits="GuildApplicantTrackerIcons">
+					<Anchors> <Anchor point="LEFT" relativeKey="$parent.bQuest" relativePoint="RIGHT" /> </Anchors>
+					<TexCoords left=".64" right=".96" top=".33" bottom=".64" />
+				</Texture>
+				<Texture parentKey="bRaid" inherits="GuildApplicantTrackerIcons">
+					<Anchors> <Anchor point="LEFT" relativeKey="$parent.bDungeon" relativePoint="RIGHT" /> </Anchors>
+					<TexCoords left=".33" right=".62" top=".66" bottom=".96" />
+				</Texture>
+				<Texture parentKey="bPvP" inherits="GuildApplicantTrackerIcons">
+					<Anchors> <Anchor point="LEFT" relativeKey="$parent.bRaid" relativePoint="RIGHT" /> </Anchors>
+					<TexCoords left="0" right=".31" top=".66" bottom=".96" />
+				</Texture>
+				<Texture parentKey="bNotes" inherits="GuildApplicantTrackerIcons">
+					<Anchors> <Anchor point="LEFT" relativeKey="$parent.bPvP" relativePoint="RIGHT" x="8" /> </Anchors>
+					<TexCoords left=".64" right=".96" top=".66" bottom=".96" />
+				</Texture>
+			</Layer>
+		</Layers>
+		<Frames>
+			<Button parentKey="Invite" text="INVITE" inherits="GuildApplicantTrackerPushButtonTemplate">
+				<Anchors>
+					<Anchor point="TOPRIGHT" x="-8" />
+				</Anchors>
+				<NormalFont style="GuildApplicantTrackerFont_Invite" />
+				<HighlightFont style="GuildApplicantTrackerFont_HighlightInvite"/>
+			</Button>
+			<Button parentKey="Decline" text="DECLINE" inherits="GuildApplicantTrackerPushButtonTemplate">
+				<Anchors>
+					<Anchor point="BOTTOMRIGHT" x="-8" />
+				</Anchors>
+				<NormalFont style="GuildApplicantTrackerFont_Decline" />
+				<HighlightFont style="GuildApplicantTrackerFont_HighlightDecline"/>
+			</Button>
+		</Frames>
+		<Scripts>
+			<OnEnter function="GuildApplicantTrackerTooltip_OnEnter" />
+			<OnLeave function="GuildApplicantTrackerTooltip_OnLeave" />
+		</Scripts>
+	</Button>
+
+	<Frame name="GuildApplicantTrackerFrame" parent="UIParent" hidden="true" movable="TRUE" enableMouse="TRUE" toplevel="TRUE" clampedToScreen="TRUE">
+		<Size x="260" y="204" />
+		<Anchors> <Anchor point="RIGHT" x="-30" y="2" /> </Anchors>
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture parentKey="LabelBG" atlas="Objective-Header" useAtlasSize="true">
+					<Anchors> <Anchor point="TOP" x="6" /> </Anchors>
+				</Texture>
+				<Texture file="Interface\QuestFrame\ObjectiveTracker">
+					<Size x="300" y="16" />
+					<Anchors> <Anchor point="BOTTOM" y="-3" /> </Anchors>
+					<TexCoords left="0" right="0.4296875" top="0.59375" bottom="0.49609375" />
+				</Texture>
+			</Layer>
+			<Layer level="ARTWORK">
+				<FontString parentKey="Label" inherits="GameFontNormal" text="GuildApplicantTracker">
+					<Anchors> <Anchor point="TOPLEFT" relativeKey="$parent.LabelBG" x="20" y="-20" /> </Anchors>
+				</FontString>
+			</Layer>
+		</Layers>
+		<TitleRegion>
+			<Anchors>
+				<Anchor point="TOPLEFT" relativeKey="$parent.LabelBG"/>
+				<Anchor point="BOTTOMRIGHT" relativeKey="$parent.LabelBG" />
+			</Anchors>
+		</TitleRegion>
+		<Frames>
+			<Button parentKey="Close" inherits="UIPanelCloseButton">
+				<Size x="24" y="24" />
+				<Anchors>
+					<Anchor point="TOPRIGHT" relativeKey="$parent.LabelBG" x="-23" y="-14" />
+				</Anchors>
+				<Scripts>
+					<OnClick function="GuildApplicantTracker_Toggle" />
+					<OnEnter function="GuildApplicantTrackerTooltip_OnEnter"/>
+					<OnLeave function="GuildApplicantTrackerTooltip_OnLeave"/>
+				</Scripts>
+			</Button>
+
+			<CheckButton parentKey="Offline">
+				<Size x="22" y="22" />
+				<Anchors> <Anchor point="RIGHT" relativeKey="$parent.Close" relativePoint="LEFT" x="-2" /> </Anchors>
+				<HitRectInsets left="0" right="0" top="0" bottom="0" />
+				<NormalTexture file="Interface\Buttons\UI-CheckBox-Up"/>
+				<PushedTexture file="Interface\Buttons\UI-CheckBox-Down"/>
+				<HighlightTexture file="Interface\Buttons\UI-CheckBox-Highlight" alphaMode="ADD"/>
+				<CheckedTexture name="$parentCheckedTexture" file="Interface\Buttons\UI-CheckBox-Check"/>
+				<DisabledCheckedTexture file="Interface\Buttons\UI-CheckBox-Check-Disabled"/>		
+				<Scripts>
+					<OnClick function="GuildApplicantTracker_ToggleOffline" />
+					<OnEnter function="GuildApplicantTrackerTooltip_OnEnter"/>
+					<OnLeave function="GuildApplicantTrackerTooltip_OnLeave"/>
+				</Scripts>
+			</CheckButton>
+
+			<ScrollFrame name="GuildApplicantTrackerContainer" parentKey="Scroll" inherits="HybridScrollFrameTemplate" setAllPoints="true">
+				<Anchors>
+					<Anchor point="TOPLEFT" y="-38" />
+					<Anchor point="BOTTOMRIGHT"/>
+				</Anchors>
+				<Frames>
+					<Slider name="$parentScrollBar" parentKey="scrollBar">
+						<Size x="12" y="0" />
+						<Anchors>
+							<Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPRIGHT" x="3" />
+							<Anchor point="BOTTOMLEFT" relativeTo="$parent" relativePoint="BOTTOMRIGHT" x="3" />
+						</Anchors>
+						<Backdrop bgFile="Interface\Buttons\UI-SliderBar-Background" edgeFile="Interface\Buttons\UI-SliderBar-Border" tile="true">
+							<EdgeSize val="8" />
+							<TileSize val="8" />
+							<BackgroundInsets left="3" right="3" top="3" bottom="3" />
+						</Backdrop>
+						<ThumbTexture parentKey="thumbTexture" file="Interface\Buttons\UI-SliderBar-Button-Vertical" />
+						<Scripts>
+							<OnValueChanged function="HybridScrollFrame_OnValueChanged"/>
+						</Scripts>
+					</Slider>
+					<Button parentKey="scrollUp" hidden="true"/>
+					<Button parentKey="scrollDown" hidden="true"/>
+				</Frames>
+			</ScrollFrame>
+		</Frames>
+		<Scripts>
+			<OnLoad function="GuildApplicantTracker_OnLoad" />
+		</Scripts>
+	</Frame> 
+
+</Ui>

@@ -1,7 +1,7 @@
 ## Interface: 60000
 ## Title: Guild Applicant Tracker
 ## Notes: An addon to close the hole between guilds and guild applicants...
-## Author: Hizuro (hizuro at gmx.net)
+## Author: Hizuro
 ## Version: @project-version@
 ## SavedVariables: GuildApplicantTrackerDB
 
