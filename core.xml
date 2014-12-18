@@ -2,9 +2,7 @@
 ..\..\FrameXML\UI.xsd">
 
 	<Script file="core.lua"/>
-	<!--
-	<Script file="optionpanel .lua" />
-	-->
+	<Script file="MenuGenerator.lua" />
 	<Script file="chatcommand.lua" />
 
 	<Font name="GuildApplicantTrackerFont_Realm" virtual="true" inherits="SystemFont_Tiny">
@@ -173,21 +171,14 @@
 				</Scripts>
 			</Button>
 
-			<CheckButton parentKey="Offline">
-				<Size x="22" y="22" />
-				<Anchors> <Anchor point="RIGHT" relativeKey="$parent.Close" relativePoint="LEFT" x="-2" /> </Anchors>
-				<HitRectInsets left="0" right="0" top="0" bottom="0" />
-				<NormalTexture file="Interface\Buttons\UI-CheckBox-Up"/>
-				<PushedTexture file="Interface\Buttons\UI-CheckBox-Down"/>
-				<HighlightTexture file="Interface\Buttons\UI-CheckBox-Highlight" alphaMode="ADD"/>
-				<CheckedTexture name="$parentCheckedTexture" file="Interface\Buttons\UI-CheckBox-Check"/>
-				<DisabledCheckedTexture file="Interface\Buttons\UI-CheckBox-Check-Disabled"/>		
-				<Scripts>
-					<OnClick function="GuildApplicantTracker_ToggleOffline" />
-					<OnEnter function="GuildApplicantTrackerTooltip_OnEnter"/>
-					<OnLeave function="GuildApplicantTrackerTooltip_OnLeave"/>
-				</Scripts>
-			</CheckButton>
+			<Button parentKey="Config">
+				<Size x="16" y="16"/>
+				<Anchors> <Anchor point="RIGHT" relativeKey="$parent.Close" relativePoint="LEFT" x="-4" /> </Anchors>
+				<NormalTexture file="Interface\Scenarios\ScenarioIcon-Interact" />
+				<PushedTexture file="Interface\Scenarios\ScenarioIcon-Interact" alpha="0.5" />
+				<HighlightTexture file="Interface\Buttons\UI-Panel-MinimizeButton-Highlight" alphaMode="ADD"/>
+				<DisabledTexture file="Interface\Addons\GuildReport\media\ScenarioIcon-Interact-Disabled" alpha="0.7"/>
+			</Button>
 
 			<ScrollFrame name="GuildApplicantTrackerContainer" parentKey="Scroll" inherits="HybridScrollFrameTemplate" setAllPoints="true">
 				<Anchors>

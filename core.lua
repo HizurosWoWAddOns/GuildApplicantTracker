@@ -23,7 +23,7 @@ local AddOrRemoveFriend,RemoveFriend = AddOrRemoveFriend,RemoveFriend;
 local currentRealm = gsub(GetRealmName()," ","");
 local _print = print;
 local Pattern = {};
-local EntryHeight = nil;
+local EntryHeight,optionMenu;
 local EntryOffset = 2;
 local Enabled = true;
 local new = {};
@@ -40,7 +40,7 @@ local db_defaults = {
 local Tracker_Update
 
 
---[[ miac functions ]]
+--[[ misc functions ]]
 local function print(...)
 	local args,colors,result = {...},{"ff44ff44","ff44aaff","ffffff44","ffff44ff","ffff8833"},{"|cffff4444"..addon.."|r:"}
 	for i,v in ipairs(args) do tinsert(result,C((colors[i] or "ffffffff"),tostring(v))) end
@@ -97,23 +97,40 @@ local function dataBrokerInit()
 			--OnEnter       = nil,
 			--OnLeave       = nil,
 			OnClick       = function(self,button)
-				GuildApplicantTracker_Toggle()
+				if (button=="LeftButton") then
+					GuildApplicantTracker_Toggle()
+				elseif (button=="RightButton") then
+					optionMenu(self,"TOP","BOTTOM");
+				end
 			end,
 			--OnDoubleClick = nil,
 			OnTooltipShow = function(self)
 				self:AddDoubleLine(L[addon],("%s/%s"):format(C("green",#applicants.online),GetNumGuildApplicants()))
-				self:AddLine(" ")
-				for i,v in ipairs(applicants.online) do
-					local realm = "";
-					if (currentRealm~=v.realm) then realm = "("..v.realm..")"; end
-					self:AddDoubleLine(v.level.." "..C(v.class,v.name)..realm, C("green",GUILD_ONLINE_LABEL))
-				end
-				if (#applicants.online>0) and (#applicants.offline>0) then
+
+				if (#applicants.online>0) then
 					self:AddLine(" ")
+					for i,v in ipairs(applicants.online) do
+						local realm = "";
+						if (currentRealm~=v.realm) then realm = "("..v.realm..")"; end
+						self:AddDoubleLine(v.level.." "..C(v.class,v.name)..realm, C("green",GUILD_ONLINE_LABEL))
+					end
 				end
-				for i,v in ipairs(applicants.offline) do
-					self:AddDoubleLine(v.level.." "..C(v.class,v.name), PLAYER_OFFLINE)
+
+				if (#applicants.offline>0) then
+					self:AddLine(" ")
+					for i,v in ipairs(applicants.offline) do
+						self:AddDoubleLine(v.level.." "..C(v.class,v.name), PLAYER_OFFLINE)
+					end
 				end
+
+				if (#applicants.online==0) and (#applicants.offline==0) then
+					self:AddLine(" ");
+					self:AddLine(L["Currently no applicants found"]);
+				end
+
+				self:AddLine(" ");
+				self:AddDoubleLine(L["Left-click || to toggle tracker frame"]);
+				self:AddDoubleLine(L["Right-click || to open option menu"]);
 			end
 		})
 
@@ -260,7 +277,7 @@ end
 
 --[[ global control functions ]]
 function GuildApplicantTracker_ToggleOffline(self,button)
-	GuildApplicantTrackerDB.viewOffline = self:GetChecked();
+	GuildApplicantTrackerDB.viewOffline = not GuildApplicantTrackerDB.viewOffline;
 	Tracker_Update();
 end
 
@@ -288,6 +305,30 @@ function GuildApplicantTracker_Reset()
 	GuildApplicantTrackerDB = db_defaults;
 end
 
+--[[ option menu ]]
+function optionMenu(parent,anchorA,anchorB)
+	PlaySound("igMainMenuOptionCheckBoxOn");
+	ns.MenuGenerator.InitializeMenu();
+	ns.MenuGenerator.addEntry({
+		{
+			label = L["Toggle Guild Applicant Tracker Frame"], --tooltip={L[""],L[""]},
+			func = GuildApplicantTracker_Toggle
+		},
+		{ separator=true },
+		{ label = SETTINGS, title=true },
+		{
+			label = L["Show minimap button"], tooltip = {L["Minimap"],L["Show or hide minimap button"]},
+			checked = function() return GuildApplicantTrackerDB.Minimap.enabled; end,
+			func = function() GuildApplicantTracker_ToggleMinimap(); end
+		},
+		{
+			label = L["Show offline applicants"], tooltip={L["Offline applicants"],L["Show or hide offline applicants"]},
+			checked = function() return GuildApplicantTrackerDB.viewOffline; end,
+			func = GuildApplicantTracker_ToggleOffline
+		},
+	});
+	ns.MenuGenerator.ShowMenu(parent, anchorA, anchorB);
+end
 
 --[[ trackerframe functions ]]
 function Tracker_Update()
@@ -382,7 +423,7 @@ local function Tracker_OnEvent(self, event, msg, ...)
 		dataBrokerInit();
 
 		-- view offline state
-		self.Offline:SetChecked(GuildApplicantTrackerDB.viewOffline);
+		--self.Offline:SetChecked(GuildApplicantTrackerDB.viewOffline);
 
 		-- unset event
 		self:UnregisterEvent(event);
@@ -392,7 +433,7 @@ local function Tracker_OnEvent(self, event, msg, ...)
 		self:RegisterEvent("CHAT_MSG_SYSTEM");
 		self:RegisterEvent("FRIENDLIST_UPDATE");
 
---	elseif event=="PLAYER_ENTERING_WORLD" then
+	--elseif event=="PLAYER_ENTERING_WORLD" then
 		if (not IsInGuild()) then
 			print(L["Addon inactive."],L["You are not in a guild."]);
 			Enabled = false;
@@ -464,15 +505,23 @@ function GuildApplicantTracker_OnLoad(self)
 	if (select(4,GetBuildInfo())<60000) then
 		self.Scroll.buttons[2]:SetPoint("TOPLEFT",self.Scroll.buttons[1],"BOTTOMLEFT",1,(-EntryOffset) - 1)
 	end
-
+	
+	--[[
 	self.Offline.tooltip = {
 		title = PLAYER_OFFLINE,
 		lines = {L["Show/Hide offline applicants."]},
 		point = {"BOTTOM",self.Offline,"TOP",0,2}
 	};
+	]]
+	self.Config:SetScript("OnClick",function(self) optionMenu(self,"TOPRIGHT","BOTTOMRIGHT") end);
+	self.Config.tooltip ={
+		title = SETTINGS,
+		lines = {L["Click to open option menu"]},
+		point = {"BOTTOM",self.Config,"TOP",0,2}
+	}
 	self.Close.tooltip = {
 		title = CLOSE,
-		lines = {L["Close %s."]:format(addon)},
+		lines = {L["Close %s"]:format(addon)},
 		point = {"BOTTOM",self.Close,"TOP",0,2}
 	};
 
