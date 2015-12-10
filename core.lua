@@ -32,6 +32,7 @@ local db_defaults = {
 	viewOffline       = false,
 	Minimap           = {enabled=true},
 	frameShow         = true,
+	PopupIfOnlineApps  = true,
 	--frameLock         = true,
 	--frameDock         = false,
 }
@@ -55,8 +56,8 @@ end
 local function applicantInfoToTable(i,na,le,cl,bQu,bDu,bRa,bPv,bRP,bWd,bWe,bTa,bHe,bDa,co,ts,tl,re)
 	na, re = strsplit("-",na);
 	if (not re) then re = currentRealm; end
-	return{index=i,name=na,realm=re, name_realm=na.."-"..gsub(re," ",""), level=le,class=cl,bQuest=bQu,bDungeon=bDu,bRaid=bRa,
-			bPvP=bPv,bRP=bRP,bWeekdays=bWd,bWeekends=bWe,bTank=nTa,bHealer=bHe,bDamage=bDa,
+	return{index=i,name=na,realm=re, name_realm=na.."-"..gsub(re," ",""), level=le,class=cl,bQuest=bQu,bDungeon=bDu,
+			bRaid=bRa,bPvP=bPv,bRP=bRP,bWeekdays=bWd,bWeekends=bWe,bTank=nTa,bHealer=bHe,bDamage=bDa,
 			comment=co,timesince=ts,timeleft=tl,bNotes=(strlen(co)>0),bFriend=false,bOnline=false};
 end
 
@@ -191,14 +192,14 @@ StaticPopupDialogs["GUILDAPPLICANTTRACKER_DECLINE"] = {
 };
 
 local function Tracker_Invite(self)
-	local x = self:GetParent().player;
+	local name = self:GetParent().player;
 	-- 5 times... its no longer save in 6.0 which param transport into the popup as "self.data"
-	StaticPopup_Show("GUILDAPPLICANTTRACKER_INVITE",x,x,x,x,x);
+	StaticPopup_Show("GUILDAPPLICANTTRACKER_INVITE",name,name,name);
 end
 
 local function Tracker_Decline(self)
-	local x = self:GetParent().player;
-	StaticPopup_Show("GUILDAPPLICANTTRACKER_DECLINE",x,x,x,x,x);
+	local name = self:GetParent().player;
+	StaticPopup_Show("GUILDAPPLICANTTRACKER_DECLINE",name,name,name);
 end
 
 
@@ -241,6 +242,10 @@ local function Lists_Update()
 	end
 
 	applicants = _applicants;
+
+	if(#applicants.online>0 and GuildApplicantTrackerDB.PopupIfOnlineApps and not GuildApplicantTrackerDB.frameShow)then
+		GuildApplicantTracker_Toggle();
+	end
 
 	if (libDataBroker) then
 		local obj = libDataBroker:GetDataObjectByName(addon)
@@ -305,17 +310,26 @@ function GuildApplicantTracker_Reset()
 	GuildApplicantTrackerDB = db_defaults;
 end
 
+function GuildApplicantTracker_ResetFrame()
+	local f=GuildApplicantTrackerFrame;
+	f:SetUserPlaced(false);
+	f:ClearAllPoints();
+	f:SetPoint("RIGHT",-30,2);
+	f:SetUserPlaced(true);
+end
+
 --[[ option menu ]]
 function optionMenu(parent,anchorA,anchorB)
 	PlaySound("igMainMenuOptionCheckBoxOn");
 	ns.MenuGenerator.InitializeMenu();
 	ns.MenuGenerator.addEntry({
+		{ label = SETTINGS, title=true },
+		{ separator=true },
 		{
-			label = L["Toggle Guild Applicant Tracker Frame"], --tooltip={L[""],L[""]},
+			label = L["Show/Hide GuildApplicantTracker"], --tooltip={L[""],L[""]},
 			func = GuildApplicantTracker_Toggle
 		},
 		{ separator=true },
-		{ label = SETTINGS, title=true },
 		{
 			label = L["Show minimap button"], tooltip = {L["Minimap"],L["Show or hide minimap button"]},
 			checked = function() return GuildApplicantTrackerDB.Minimap.enabled; end,
@@ -324,7 +338,23 @@ function optionMenu(parent,anchorA,anchorB)
 		{
 			label = L["Show offline applicants"], tooltip={L["Offline applicants"],L["Show or hide offline applicants"]},
 			checked = function() return GuildApplicantTrackerDB.viewOffline; end,
-			func = GuildApplicantTracker_ToggleOffline
+			func = function() GuildApplicantTracker_ToggleOffline(); end
+		},
+		{
+			label = L["Popup frame if applicant online"], --tooltip={L[""],L[""]},
+			checked = function() return GuildApplicantTrackerDB.PopupIfOnlineApps; end,
+			func = function() GuildApplicantTrackerDB.PopupIfOnlineApps = not GuildApplicantTrackerDB.PopupIfOnlineApps; end
+		},
+		{ separator=true },
+		{
+			label = L["Reset frame position"], tooltip={L["Reset frame position"],L["If the frame out of screen, you can reset its position with this option"]},
+			--checked = function() return GuildApplicantTrackerDB. end.
+			func = function() GuildApplicantTracker_ResetFrame(); end
+		},
+		{
+			label = L["Reset addon settings"], --tooltip={},
+			--checked = function() end,
+			func = function() GuildApplicantTracker_Reset(); end
 		},
 	});
 	ns.MenuGenerator.ShowMenu(parent, anchorA, anchorB);
@@ -407,9 +437,51 @@ function Tracker_Update()
 	HybridScrollFrame_Update(scroll, visibleEntries * height, nButtons * height);
 end
 
-local function Tracker_OnEvent(self, event, msg, ...)
+local function Tracker_OnShow()
+	--Lists_Update();
+	Tracker_Update();
+end
+
+function GuildApplicantTracker_OnLoad(self)
+	if (not self) and (self~=_G['GuildApplicantTrackerFrame']) then return end
+
+	self.Scroll.update = Tracker_Update;
+	HybridScrollFrame_CreateButtons(self.Scroll, "GuildApplicantTrackerEntryTemplate", 0, 0, nil, nil, 0, -EntryOffset);
+	EntryHeight = self.Scroll.buttons[1]:GetHeight();
+	if (select(4,GetBuildInfo())<60000) then
+		self.Scroll.buttons[2]:SetPoint("TOPLEFT",self.Scroll.buttons[1],"BOTTOMLEFT",1,(-EntryOffset) - 1)
+	end
+	
+	self.Config:SetScript("OnClick",function(self) optionMenu(self,"TOPRIGHT","BOTTOMRIGHT") end);
+	self.Config.tooltip ={
+		title = SETTINGS,
+		lines = {L["Click to open option menu"]},
+		point = {"BOTTOM",self.Config,"TOP",0,2}
+	}
+	self.Close.tooltip = {
+		title = CLOSE,
+		lines = {L["Close %s"]:format(addon)},
+		point = {"BOTTOM",self.Close,"TOP",0,2}
+	};
+
+	self:SetScript("OnShow", Tracker_OnShow);
+end
+
+
+--[[ event frame ]]
+local eventframe = CreateFrame("Frame");
+eventframe.elapsed = 0;
+eventframe:SetScript("OnEvent",function(self, event, msg, ...)
 	local update = false;
 	if (event=="ADDON_LOADED") and (msg==addon) then
+		for _,v in ipairs({"ERR_FRIEND_ONLINE_SS","ERR_FRIEND_OFFLINE_S","ERR_FRIEND_REMOVED_S","ERR_GUILD_INVITE_S",
+			"ERR_GUILD_DECLINE_AUTO_S","ERR_GUILD_DECLINE_S","ERR_GUILD_JOIN_S","ERR_FRIEND_ADDED_S"}) do
+			if(_G[v]:find("\12Hplayer"))then
+				Pattern[v] = strtrim(gsub(_G[v],"%[%%s%]","%%[(%%s+)%%]"));
+			else
+				Pattern[v] = strtrim(gsub(_G[v],"%%s","(%%s+)"))
+			end
+		end
 		print(L["Addon loaded..."]);
 	elseif (event=="PLAYER_ENTERING_WORLD") then
 		-- defaults checkup
@@ -422,9 +494,6 @@ local function Tracker_OnEvent(self, event, msg, ...)
 		-- databroker & minimap
 		dataBrokerInit();
 
-		-- view offline state
-		--self.Offline:SetChecked(GuildApplicantTrackerDB.viewOffline);
-
 		-- unset event
 		self:UnregisterEvent(event);
 
@@ -433,7 +502,6 @@ local function Tracker_OnEvent(self, event, msg, ...)
 		self:RegisterEvent("CHAT_MSG_SYSTEM");
 		self:RegisterEvent("FRIENDLIST_UPDATE");
 
-	--elseif event=="PLAYER_ENTERING_WORLD" then
 		if (not IsInGuild()) then
 			print(L["Addon inactive."],L["You are not in a guild."]);
 			Enabled = false;
@@ -470,65 +538,15 @@ local function Tracker_OnEvent(self, event, msg, ...)
 		Lists_Update();
 		Tracker_Update();
 	end
-end
-
-local function Tracker_OnShow()
-	--Lists_Update();
-	Tracker_Update();
-end
-
-local Tracker_OnUpdate;
-do
-	local eclipsed = 0;
-	function Tracker_OnUpdate(self,eclipse)
-		eclipsed = eclipsed + eclipse;
-		if (eclipsed>0) then
-			eclipsed = 0;
-			if (DoAddNew) then
-				addToFriendList();
-			end
+end);
+eventframe:SetScript("OnUpdate",function(self,elapse)
+	self.elapsed = self.elapsed + elapse;
+	if(self.elapsed>=1)then
+		self.elapsed = 0;
+		if(DoAddNew)then
+			addToFriendList();
 		end
 	end
-end
-
-function GuildApplicantTracker_OnLoad(self)
-	if (not self) and (self~=_G['GuildApplicantTrackerFrame']) then return end
-
-	for _,v in ipairs({"ERR_FRIEND_ONLINE_SS","ERR_FRIEND_OFFLINE_S","ERR_FRIEND_REMOVED_S","ERR_GUILD_INVITE_S",
-		"ERR_GUILD_DECLINE_AUTO_S","ERR_GUILD_DECLINE_S","ERR_GUILD_JOIN_S","ERR_FRIEND_ADDED_S"}) do
-		Pattern[v] = strtrim(gsub(gsub(_G[v],"%|Hplayer:%%s%|h%[%%s%]%|h",".*%%[(.+)%%].*"),"%%s","(.+)"))
-	end
-
-	self.Scroll.update = Tracker_Update;
-	HybridScrollFrame_CreateButtons(self.Scroll, "GuildApplicantTrackerEntryTemplate", 0, 0, nil, nil, 0, -EntryOffset);
-	EntryHeight = self.Scroll.buttons[1]:GetHeight();
-	if (select(4,GetBuildInfo())<60000) then
-		self.Scroll.buttons[2]:SetPoint("TOPLEFT",self.Scroll.buttons[1],"BOTTOMLEFT",1,(-EntryOffset) - 1)
-	end
-	
-	--[[
-	self.Offline.tooltip = {
-		title = PLAYER_OFFLINE,
-		lines = {L["Show/Hide offline applicants."]},
-		point = {"BOTTOM",self.Offline,"TOP",0,2}
-	};
-	]]
-	self.Config:SetScript("OnClick",function(self) optionMenu(self,"TOPRIGHT","BOTTOMRIGHT") end);
-	self.Config.tooltip ={
-		title = SETTINGS,
-		lines = {L["Click to open option menu"]},
-		point = {"BOTTOM",self.Config,"TOP",0,2}
-	}
-	self.Close.tooltip = {
-		title = CLOSE,
-		lines = {L["Close %s"]:format(addon)},
-		point = {"BOTTOM",self.Close,"TOP",0,2}
-	};
-
-	self:SetScript("OnShow", Tracker_OnShow);
-	self:SetScript("OnEvent", Tracker_OnEvent);
-	self:SetScript("OnUpdate", Tracker_OnUpdate);
-
-	self:RegisterEvent("ADDON_LOADED");
-	self:RegisterEvent("PLAYER_ENTERING_WORLD");
-end
+end);
+eventframe:RegisterEvent("ADDON_LOADED");
+eventframe:RegisterEvent("PLAYER_ENTERING_WORLD");
