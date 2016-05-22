@@ -70,7 +70,7 @@ self.addEntry = function(D,P)
 		return;
 
 	elseif (D.childs) then -- child elements
-		local parent = self.addEntry({ label=D.label, arrow=true },P);
+		local parent = self.addEntry({ label=D.label, arrow=true, disabled=D.disabled },P);
 		for i,v in ipairs(D.childs) do
 			self.addEntry(v,parent);
 		end
@@ -82,7 +82,7 @@ self.addEntry = function(D,P)
 		else
 			wipe(self.controlGroups[D.groupName])
 		end
-		local parent = self.addEntry({ label=D.label, arrow=true },P);
+		local parent = self.addEntry({ label=D.label, arrow=true, disabled=D.disabled },P);
 		parent.controlGroup=self.controlGroups[D.groupName];
 		for i,v in ipairs(D.optionGroup) do
 			tinsert(self.controlGroups[D.groupName],self.addEntry(v,parent));
