@@ -43,9 +43,16 @@ local Tracker_Update
 
 --[[ misc functions ]]
 local function print(...)
-	local args,colors,result = {...},{"ff44ff44","ff44aaff","ffffff44","ffff44ff","ffff8833"},{"|cffff4444"..addon.."|r:"}
-	for i,v in ipairs(args) do tinsert(result,C((colors[i] or "ffffffff"),tostring(v))) end
-	_print(unpack(result));
+	local colors,t,c = {"0099ff","00ff00","ff6060","44ffff","ffff00","ff8800","ff44ff","ffffff"},{},1;
+	for i,v in ipairs({addon..":",...}) do
+		if type(v)=="string" and v:match("||c") then
+			tinsert(t,v)
+		else
+			tinsert(t,"|cff"..colors[c]..tostring(v).."|r");
+			c = c<#colors and c+1 or 1;
+		end
+	end
+	_print(unpack(t));
 end
 
 local function whisperToApplicant(self,button)
