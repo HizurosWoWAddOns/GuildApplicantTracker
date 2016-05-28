@@ -544,6 +544,7 @@ function GuildApplicantTrackerFrame_OnEvent(self,event,msg,...)
 				GuildApplicantTrackerFrame_OnUpdate(GuildApplicantTrackerFrame);
 			end);
 		end);
+		RequestGuildRecruitmentSettings();
 		RequestGuildApplicantsList();
 	elseif event=="LF_GUILD_RECRUIT_LIST_CHANGED" then
 		RequestGuildApplicantsList();
