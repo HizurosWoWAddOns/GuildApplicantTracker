@@ -330,7 +330,7 @@ function GuildApplicantTracker_ToggleMinimap()
 end
 
 function GuildApplicantTracker_Toggle(force)
-	local state = force or not GuildApplicantTrackerFrame:IsShown();
+	local state = force==true and true or not GuildApplicantTrackerFrame:IsShown();
 	GuildApplicantTrackerFrame:SetShown(state);
 	GuildApplicantTrackerDB.frameShow = state;
 end
