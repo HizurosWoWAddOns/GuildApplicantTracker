@@ -8,6 +8,7 @@
 -- SavedVariables
 GuildApplicantTrackerDB = {}
 
+
 -- Libs
 local libColors = LibStub("LibColors-1.0");
 local libDataBroker = LibStub("LibDataBroker-1.1");
@@ -21,13 +22,15 @@ local applicants = {online={},offline={},names={}};
 local GetFriendInfo,GetGuildApplicantInfo = GetFriendInfo,GetGuildApplicantInfo;
 local AddOrRemoveFriend,RemoveFriend = AddOrRemoveFriend,RemoveFriend;
 local currentRealm = gsub(GetRealmName()," ","");
-local _print = print;
 local Pattern = {};
 local EntryHeight,optionMenu;
 local EntryOffset = 2;
-local Enabled = true;
+local Enabled = nil;
 local new = {};
+local name_realm, level, class, bQuest, bDungeon, bRaid, bPvP, bRP, bWeekdays, bWeekends, bTank, bHealer, bDamage, comment, timeSince, timeLeft = 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16;
+local name, realm, bComment, bFriend, bOnline = 17,18,19,20,21; -- add by applicantInfoToTable()
 local DoAddNew = false;
+local _counter = 0;
 local db_defaults = {
 	viewOffline       = false,
 	Minimap           = {enabled=true},
@@ -38,21 +41,23 @@ local db_defaults = {
 }
 
 -- predeclare local function names...
-local Tracker_Update
+local GuildApplicantTrackerFrame_ListUpdate
 
 
 --[[ misc functions ]]
-local function print(...)
+function ns.print(...)
 	local colors,t,c = {"0099ff","00ff00","ff6060","44ffff","ffff00","ff8800","ff44ff","ffffff"},{},1;
-	for i,v in ipairs({addon..":",...}) do
-		if type(v)=="string" and v:match("||c") then
-			tinsert(t,v)
-		else
-			tinsert(t,"|cff"..colors[c]..tostring(v).."|r");
-			c = c<#colors and c+1 or 1;
+	for i,v in ipairs({...}) do
+		v = tostring(v);
+		if i==1 and v~="" then
+			tinsert(t,"|cff0099ff"..addon.."|r:"); c=2;
 		end
+		if not v:match("||c") then
+			v,c = "|cff"..colors[c]..v.."|r", c<#colors and c+1 or 1;
+		end
+		tinsert(t,v);
 	end
-	_print(unpack(t));
+	print(unpack(t));
 end
 
 local function whisperToApplicant(self,button)
@@ -60,25 +65,43 @@ local function whisperToApplicant(self,button)
 	SetItemRef("player:"..self.player,("|Hplayer:%1$s|h[%1$s]|h"):format(self.player), "LeftButton");
 end
 
-local function applicantInfoToTable(i,na,le,cl,bQu,bDu,bRa,bPv,bRP,bWd,bWe,bTa,bHe,bDa,co,ts,tl,re)
-	na, re = strsplit("-",na);
-	if (not re) then re = currentRealm; end
-	return{index=i,name=na,realm=re, name_realm=na.."-"..gsub(re," ",""), level=le,class=cl,bQuest=bQu,bDungeon=bDu,
-			bRaid=bRa,bPvP=bPv,bRP=bRP,bWeekdays=bWd,bWeekends=bWe,bTank=nTa,bHealer=bHe,bDamage=bDa,
-			comment=co,timesince=ts,timeleft=tl,bNotes=(strlen(co)>0),bFriend=false,bOnline=false};
+local function GetGuildApplicantInfoExtended(index)
+	local data = {GetGuildApplicantInfo(index)};
+	local n,r=strsplit("-",data[name_realm]);
+	if (not r) then
+		r=currentRealm;
+		data[name_realm] = n.."-"..r;
+	end
+	tinsert(data,n); -- [17]
+	tinsert(data,r); -- [18]
+	tinsert(data, data[comment] and strlen(data[comment])>0); -- [19]
+	tinsert(data,false); -- [20]
+	tinsert(data,false); -- [21]
+	return data;
 end
 
 local function addToFriendList()
 	if (DoAddNew) then
+		local tmp,count,added={},0;
 		for i,v in pairs(new) do
-			if (v==true) then
-				print((L["Adding applicant %s to your friendlist."]):format(i));
+			if added==nil then
+				ns.print((L["Adding applicant %s to your friendlist."]):format(i));
 				AddOrRemoveFriend(i,"[GuildApplicant]");
-				new[i] = false;
+				added = i;
+			else
+				tmp[i]=v;
+				count=count+1;
 			end
 		end
-		wipe(new);
-		DoAddNew = false;
+		new = tmp;
+		if count==0 then
+			wipe(new);
+			DoAddNew = false;
+			GuildApplicantTrackerFrame.elapse=-0.5;
+		else
+			GuildApplicantTrackerFrame.elapse=-1.5;
+		end
+		GuildApplicantTrackerFrame.doUpdate=true;
 	end
 end
 
@@ -118,16 +141,16 @@ local function dataBrokerInit()
 				if (#applicants.online>0) then
 					self:AddLine(" ")
 					for i,v in ipairs(applicants.online) do
-						local realm = "";
-						if (currentRealm~=v.realm) then realm = "("..v.realm..")"; end
-						self:AddDoubleLine(v.level.." "..C(v.class,v.name)..realm, C("green",GUILD_ONLINE_LABEL))
+						local _realm = "";
+						if (currentRealm~=v[realm]) then _realm = "("..v[realm]..")"; end
+						self:AddDoubleLine(v[level].." "..C(v[class],v[name]).._realm, C("green",GUILD_ONLINE_LABEL))
 					end
 				end
 
 				if (#applicants.offline>0) then
 					self:AddLine(" ")
 					for i,v in ipairs(applicants.offline) do
-						self:AddDoubleLine(v.level.." "..C(v.class,v.name), PLAYER_OFFLINE)
+						self:AddDoubleLine(v[level].." "..C(v[class],v[name]), PLAYER_OFFLINE)
 					end
 				end
 
@@ -153,15 +176,15 @@ end
 
 
 --[[ Static Popups ]]
-StaticPopupDialogs["GUILDAPPLICANTTRACKER_INVITE"] = {
+StaticPopupDialogs["GUILDAPPLICANTINVITE"] = {
 	text = "",
 	button1 = INVITE,
 	button2 = CANCEL,
-	OnShow = function(self, data)
-		self.text:SetText(L["You want to invite %s into this guild?"]:format(data))
+	OnShow = function(self)
+		self.text:SetText(L["You want to invite %s into this guild?"]:format(self.data))
 	end,
-	OnAccept = function(self, data)
-		GuildInvite(data)
+	OnAccept = function(self)
+		GuildInvite(self.data)
 	end,
 	OnHide = function(self)
 		self.data = nil
@@ -172,18 +195,18 @@ StaticPopupDialogs["GUILDAPPLICANTTRACKER_INVITE"] = {
 	hideOnEscape = 1
 };
 
-StaticPopupDialogs["GUILDAPPLICANTTRACKER_DECLINE"] = {
+StaticPopupDialogs["GUILDAPPLICANTDECLINE"] = {
 	text = "",
 	button1 = ACCEPT,
 	button2 = CANCEL,
-	OnShow = function(self, data)
-		self.text:SetText(L["Do you really want to decline %s's guild application?"]:format(data))
+	OnShow = function(self)
+		self.text:SetText(L["Do you really want to decline %s's guild application?"]:format(self.data))
 	end,
-	OnAccept = function(self,data)
+	OnAccept = function(self)
 		for i=1, GetNumGuildApplicants() do
 			local name = GetGuildApplicantInfo(i);
 			if (not name:find("-")) then name = name.."-"..currentRealm; end
-			if (name == data) then
+			if (name == self.data) then
 				DeclineGuildApplicant(i);
 				return;
 			end
@@ -198,28 +221,28 @@ StaticPopupDialogs["GUILDAPPLICANTTRACKER_DECLINE"] = {
 	hideOnEscape = 1
 };
 
-local function Tracker_Invite(self)
+local function GuildApplicantTrackerFrame_Invite(self)
 	local name = self:GetParent().player;
 	-- 5 times... its no longer save in 6.0 which param transport into the popup as "self.data"
-	StaticPopup_Show("GUILDAPPLICANTTRACKER_INVITE",name,name,name);
+	StaticPopup_Show("GUILDAPPLICANTINVITE",nil,nil,name);
 end
 
-local function Tracker_Decline(self)
+local function GuildApplicantTrackerFrame_Decline(self)
 	local name = self:GetParent().player;
-	StaticPopup_Show("GUILDAPPLICANTTRACKER_DECLINE",name,name,name);
+	StaticPopup_Show("GUILDAPPLICANTDECLINE",nil,nil,name);
 end
 
 
 --[[ update function ]]
 local function Lists_Update()
-	local _,name,online,note,level,class,bQuest,bDungeon,bRaid,bPvP,bRP,bWeekdays,bWeekends,bTank,bHealer,bDamage,comment,timesince,timeleft
+	local _,tmp
 
-	local friends = {};
-	for i=1, GetNumFriends() do
-		name,_,_,_,online,_,note = GetFriendInfo(i);
-		if (name) then
-			if (not name:find("-")) then name = name.."-"..currentRealm; end
-			friends[name] = { (note~=nil and note:find("%[GuildApplicant%]")==1) , online };
+	local friends,numFriends,_,fName,fOnline,fNote = {},GetNumFriends();
+	for i=1, numFriends do
+		local fName,_,_,_,fOnline,_,fNote = GetFriendInfo(i);
+		if (fName) then
+			if (not fName:find("-")) then fName = fName.."-"..currentRealm; end
+			friends[fName] = { (fNote~=nil and fNote:find("%[GuildApplicant%]")==1) , fOnline };
 		end
 	end
 
@@ -227,19 +250,20 @@ local function Lists_Update()
 	local add = false;
 
 	for i=1, GetNumGuildApplicants() do
-		tmp = applicantInfoToTable(i, GetGuildApplicantInfo(i));
-		if (friends[tmp.name_realm]) then
-			tmp.bFriend=true;
-			if (friends[tmp.name_realm][2]==true) then
-				tmp.bOnline=true;
+		tmp = GetGuildApplicantInfoExtended(i);
+		if (friends[tmp[name_realm]]) then
+			tmp[bFriend]=true;
+			if (friends[tmp[name_realm]][2]==true) then
+				tmp[bOnline]=true;
 			end
-			friends[tmp.name_realm] = nil;
+			friends[tmp[name_realm]] = nil;
 		else
-			new[tmp.name_realm] = true;
+			new[tmp[name_realm]] = true;
 			DoAddNew = true;
+			GuildApplicantTrackerFrame.doUpdate=true;
 		end
-		tinsert(_applicants[(tmp.bOnline) and "online" or "offline"],tmp);
-		_applicants.names[tmp.name_realm] = true;
+		tinsert(_applicants[(tmp[bOnline]) and "online" or "offline"],tmp);
+		_applicants.names[tmp[name_realm]] = true;
 	end
 
 	for i,v in pairs(friends) do
@@ -250,14 +274,16 @@ local function Lists_Update()
 
 	applicants = _applicants;
 
-	if(#applicants.online>0 and GuildApplicantTrackerDB.PopupIfOnlineApps and not GuildApplicantTrackerDB.frameShow)then
-		GuildApplicantTracker_Toggle();
+	if(#applicants.online>0 and GuildApplicantTrackerDB.PopupIfOnlineApps)then
+		GuildApplicantTracker_Toggle(true);
 	end
 
 	if (libDataBroker) then
 		local obj = libDataBroker:GetDataObjectByName(addon)
 		obj.text = ("%s/%s"):format(C("green",#applicants.online),GetNumGuildApplicants());
 	end
+
+	GuildApplicantTrackerFrame_ListUpdate();
 end
 
 
@@ -290,7 +316,7 @@ end
 --[[ global control functions ]]
 function GuildApplicantTracker_ToggleOffline(self,button)
 	GuildApplicantTrackerDB.viewOffline = not GuildApplicantTrackerDB.viewOffline;
-	Tracker_Update();
+	GuildApplicantTrackerFrame_ListUpdate();
 end
 
 function GuildApplicantTracker_ToggleMinimap()
@@ -303,14 +329,19 @@ function GuildApplicantTracker_ToggleMinimap()
 	end
 end
 
-function GuildApplicantTracker_Toggle(self,button)
-	if (GuildApplicantTrackerFrame:IsShown()) then
-		GuildApplicantTrackerFrame:Hide();
-		GuildApplicantTrackerDB.frameShow = false;
+function GuildApplicantTracker_Toggle(force)
+	local state = force or not GuildApplicantTrackerFrame:IsShown();
+	GuildApplicantTrackerFrame:SetShown(state);
+	GuildApplicantTrackerDB.frameShow = state;
+end
+
+function GuidlApplicantTracker_ToggleOption(key,force)
+	if force~=nil then
+		GuildApplicantTrackerDB[key] = force;
 	else
-		GuildApplicantTrackerFrame:Show();
-		GuildApplicantTrackerDB.frameShow = true;
+		GuildApplicantTrackerDB[key] = not GuildApplicantTrackerDB[key];
 	end
+	return GuildApplicantTrackerDB[key];
 end
 
 function GuildApplicantTracker_Reset()
@@ -368,7 +399,7 @@ function optionMenu(parent,anchorA,anchorB)
 end
 
 --[[ trackerframe functions ]]
-function Tracker_Update()
+function GuildApplicantTrackerFrame_ListUpdate()
 	local scroll = GuildApplicantTrackerContainer;
 	local button, index, offset, nButtons, nOnline, applicant;
 	offset = HybridScrollFrame_GetOffset(scroll);
@@ -388,48 +419,53 @@ function Tracker_Update()
 
 		if (applicant) then
 			-- level
-			button.Level:SetText(applicant.level);
+			button.Level:SetText(applicant[level]);
 			-- name
-			button.Name:SetText(C(applicant.class,applicant.name));
+			button.Name:SetText(C(applicant[class],applicant[name]));
 			-- realm
-			button.Realm:SetText(applicant.realm);
+			button.Realm:SetText(applicant[realm]);
 			-- class icon
-			button.Class:SetTexCoord(unpack(CLASS_BUTTONS[applicant.class]));
+			button.Class:SetTexCoord(unpack(CLASS_ICON_TCOORDS[applicant[class]]));
 			-- selected icons
-			for _,v in ipairs({"bTank","bHealer","bDamage","bNotes","bPvP","bRaid","bDungeon","bQuest" --[[,"bRP","bWeekdays","bWeekends"]]}) do
-				if (button[v]) then
-					local tex = button[v]:GetTexture()
-					if (applicant[v]) then
-						tex = gsub(tex,"Deselected","Selected");
-						button[v]:SetAlpha(1);
+			for key,Index in pairs({bTank=bTank,bHealer=bHealer,bDamage=bDamage,bComment=bComment,bPvP=bPvP,bRaid=bRaid,bDungeon=bDungeon,bQuest=bQuest --[[,bRP=bRP,bWeekdays=bWeekdays,bWeekends=bWeekends]]}) do
+				if (button[key]) then
+					if (applicant[Index]) then
+						button[key]:SetAlpha(1);
+						button[key]:SetDesaturated(false);
 					else
-						tex = gsub(tex,"Selected","Deselected");
-						button[v]:SetAlpha(0.35);
+						button[key]:SetAlpha(0.40);
+						button[key]:SetDesaturated(true);
 					end
-					button[v]:SetTexture(tex);
 				end
 			end
 
-			if (applicant.bOnline) then
-				button.Status:Hide();
-				button.Invite:Show();
-				button:SetScript("OnClick",whisperToApplicant);
+			if Enabled then
+				if (applicant[bOnline]) then
+					button.Status:Hide();
+					button.Invite:Show();
+					button:SetScript("OnClick",whisperToApplicant);
+				else
+					button.Status:SetText("("..C("white","Offline")..")");
+					button.Status:Show();
+					button.Invite:Hide();
+					button:SetScript("OnClick",nil);
+				end
+				button.Invite:SetScript("OnClick",GuildApplicantTrackerFrame_Invite);
+				button.Decline:SetScript("OnClick",GuildApplicantTrackerFrame_Decline);
 			else
-				button.Status:SetText("("..C("white","Offline")..")");
-				button.Status:Show();
+				button.Status:Hide();
 				button.Invite:Hide();
-				button:SetScript("OnClick",nil);
+				button.Invite:SetScript("OnClick",nil);
+				button.Decline:SetScript("OnClick",nil);
 			end
-			button.Invite:SetScript("OnClick",Tracker_Invite);
-			button.Decline:SetScript("OnClick",Tracker_Decline);
 
 			button.tooltip = {
-				title = C(applicant.class,applicant.name),
-				lines = { (applicant.bNotes) and applicant.comment or C("gray",L["No comment..."])},
+				title = C(applicant[class],applicant[name]),
+				lines = { (applicant[bComment]) and applicant[comment] or C("gray",L["No comment..."])},
 				point = {"RIGHT",button,"LEFT",-2,0}
 			};
 
-			button.player = applicant.name_realm; -- for whisperToApplicant, Tracker_Invite and Tracker_Decline
+			button.player = applicant[name_realm]; -- for whisperToApplicant, GuildApplicantTrackerFrame_Invite and GuildApplicantTrackerFrame_Decline
 			button:Show();
 		else
 			button:Hide();
@@ -444,41 +480,28 @@ function Tracker_Update()
 	HybridScrollFrame_Update(scroll, visibleEntries * height, nButtons * height);
 end
 
-local function Tracker_OnShow()
+function GuildApplicantTrackerFrame_OnShow(self)
 	--Lists_Update();
-	Tracker_Update();
+	--GuildApplicantTrackerFrame_ListUpdate();
+	self.doUpdate=true;
 end
 
-function GuildApplicantTracker_OnLoad(self)
-	if (not self) and (self~=_G['GuildApplicantTrackerFrame']) then return end
-
-	self.Scroll.update = Tracker_Update;
-	HybridScrollFrame_CreateButtons(self.Scroll, "GuildApplicantTrackerEntryTemplate", 0, 0, nil, nil, 0, -EntryOffset);
-	EntryHeight = self.Scroll.buttons[1]:GetHeight();
-	if (select(4,GetBuildInfo())<60000) then
-		self.Scroll.buttons[2]:SetPoint("TOPLEFT",self.Scroll.buttons[1],"BOTTOMLEFT",1,(-EntryOffset) - 1)
+local function GuildApplicantTrackerFrame_OnUpdate(self,elapse)
+	if self.doUpdate==true then
+		--if self.elapse>=0.5 then
+		--	self.elapse=0;
+			self.doUpdate=false;
+			if(DoAddNew)then
+				addToFriendList();
+			else
+				Lists_Update();
+			end
+		--end
+		--self.elapse = self.elapse + elapse;
 	end
-	
-	self.Config:SetScript("OnClick",function(self) optionMenu(self,"TOPRIGHT","BOTTOMRIGHT") end);
-	self.Config.tooltip ={
-		title = SETTINGS,
-		lines = {L["Click to open option menu"]},
-		point = {"BOTTOM",self.Config,"TOP",0,2}
-	}
-	self.Close.tooltip = {
-		title = CLOSE,
-		lines = {L["Close %s"]:format(addon)},
-		point = {"BOTTOM",self.Close,"TOP",0,2}
-	};
-
-	self:SetScript("OnShow", Tracker_OnShow);
 end
 
-
---[[ event frame ]]
-local eventframe = CreateFrame("Frame");
-eventframe.elapsed = 0;
-eventframe:SetScript("OnEvent",function(self, event, msg, ...)
+function GuildApplicantTrackerFrame_OnEvent(self,event,msg,...)
 	local update = false;
 	if (event=="ADDON_LOADED") and (msg==addon) then
 		for _,v in ipairs({"ERR_FRIEND_ONLINE_SS","ERR_FRIEND_OFFLINE_S","ERR_FRIEND_REMOVED_S","ERR_GUILD_INVITE_S",
@@ -489,7 +512,8 @@ eventframe:SetScript("OnEvent",function(self, event, msg, ...)
 				Pattern[v] = strtrim(gsub(_G[v],"%%s","(%%s+)"))
 			end
 		end
-		print(L["Addon loaded..."]);
+		self.elapse=-3;
+		ns.print(L["Addon loaded..."]);
 	elseif (event=="PLAYER_ENTERING_WORLD") then
 		-- defaults checkup
 		for i,v in pairs(db_defaults) do
@@ -508,52 +532,87 @@ eventframe:SetScript("OnEvent",function(self, event, msg, ...)
 		self:RegisterEvent("LF_GUILD_RECRUITS_UPDATED");
 		self:RegisterEvent("CHAT_MSG_SYSTEM");
 		self:RegisterEvent("FRIENDLIST_UPDATE");
+		self:RegisterEvent("GUILD_RANKS_UPDATE");
 
-		if (not IsInGuild()) then
-			print(L["Addon inactive."],L["You are not in a guild."]);
-			Enabled = false;
-		elseif (not CanGuildInvite()) then
-			print(L["Addon inactive."],L["You can not invite players."]);
-			Enabled = false;
-		end
-		if (Enabled) and (GuildApplicantTrackerDB.frameShow) then
+
+		if GuildApplicantTrackerDB.frameShow then
 			self:Show();
 		end
-	elseif (Enabled) and (event=="LF_GUILD_RECRUITS_UPDATED" or event=="FRIENDLIST_UPDATE") then
+
+		C_Timer.After(3,function()
+			C_Timer.NewTicker(0.4,function()
+				GuildApplicantTrackerFrame_OnUpdate(GuildApplicantTrackerFrame);
+			end);
+		end);
+		RequestGuildApplicantsList();
+	elseif event=="LF_GUILD_RECRUIT_LIST_CHANGED" then
+		RequestGuildApplicantsList();
+	elseif event=="GUILD_RANKS_UPDATE" then
+		if (not IsInGuild()) then
+			if Enabled then
+				ns.print(L["Invite function disabled"],"("..L["You've left the guild."]..")");
+			else
+				ns.print(L["Invite function disabled"],"("..L["You are not in a guild."]..")");
+			end
+			Enabled = false;
+		elseif (not CanGuildInvite()) then
+			if Enabled then
+				ns.print(L["Invite function disabled"],"("..L["You've lost the right to invite players."]..")");
+			else
+				ns.print(L["Invite function disabled"],"("..L["You've not the right to invite players."]..")");
+			end
+			Enabled = false;
+		else
+			Enabled = true;
+		end
+	elseif event=="LF_GUILD_RECRUITS_UPDATED" or event=="FRIENDLIST_UPDATE" then
 		update = true;
-	elseif (Enabled) and event=="CHAT_MSG_SYSTEM" then
+	elseif event=="CHAT_MSG_SYSTEM" then
 		local pattern,name = chkChatMsg(msg);
-		if (name) and (not applicants.names[name]) then
-			-- ignore
-		elseif (pattern=="ERR_FRIEND_ONLINE_SS") then
-			update = true;
-		elseif (pattern=="ERR_FRIEND_OFFLINE_S") then
-			update = true;
-		elseif (pattern=="ERR_GUILD_INVITE_S") then
-			update = true;
-		elseif (pattern=="ERR_GUILD_DECLINE_AUTO_S") then
-			print(L["Warning:"],name,L["has decline your invitation automaticly (by interface option)..."]);
-		elseif (pattern=="ERR_GUILD_DECLINE_S") then
-			print(L["Warning:"],name,L["has decline your invitation..."]);
-		elseif (pattern=="ERR_GUILD_JOIN_S") then
-			update = true;
-		elseif (pattern=="ERR_FRIEND_ADDED_S") then
-			update = true;
+		if name and applicants.names[name] then
+			if pattern=="ERR_FRIEND_ONLINE_SS" or pattern=="ERR_FRIEND_OFFLINE_S" or pattern=="ERR_GUILD_INVITE_S" or pattern=="ERR_GUILD_JOIN_S" or pattern=="ERR_FRIEND_ADDED_S" then
+				update = true;
+			elseif (pattern=="ERR_GUILD_DECLINE_AUTO_S") then
+				ns.print(L["Warning:"],name,L["has decline your invitation automaticly (by interface option)..."]);
+			elseif (pattern=="ERR_GUILD_DECLINE_S") then
+				ns.print(L["Warning:"],name,L["has decline your invitation..."]);
+			end
 		end
 	end
 	if (update) then
-		Lists_Update();
-		Tracker_Update();
+		self.doUpdate=true;
 	end
-end);
-eventframe:SetScript("OnUpdate",function(self,elapse)
-	self.elapsed = self.elapsed + elapse;
-	if(self.elapsed>=1)then
-		self.elapsed = 0;
-		if(DoAddNew)then
-			addToFriendList();
-		end
+end
+
+function GuildApplicantTrackerFrame_OnLoad(self)
+	if (not self) and (self~=_G['GuildApplicantTrackerFrame']) then return end
+
+	self.Scroll.update = GuildApplicantTrackerFrame_ListUpdate;
+	HybridScrollFrame_CreateButtons(self.Scroll, "GuildApplicantTrackerEntryTemplate", 0, 0, nil, nil, 0, -EntryOffset);
+	EntryHeight = self.Scroll.buttons[1]:GetHeight();
+	if (select(4,GetBuildInfo())<60000) then
+		self.Scroll.buttons[2]:SetPoint("TOPLEFT",self.Scroll.buttons[1],"BOTTOMLEFT",1,(-EntryOffset) - 1)
 	end
-end);
-eventframe:RegisterEvent("ADDON_LOADED");
-eventframe:RegisterEvent("PLAYER_ENTERING_WORLD");
+	GuildApplicantTrackerFrame_ListUpdate();
+	
+	self.Config:SetScript("OnClick",function(self) optionMenu(self,"TOPRIGHT","BOTTOMRIGHT") end);
+	self.Config.tooltip ={
+		title = SETTINGS,
+		lines = {L["Click to open option menu"]},
+		point = {"BOTTOM",self.Config,"TOP",0,2}
+	}
+	self.Close.tooltip = {
+		title = CLOSE,
+		lines = {L["Close %s"]:format(addon)},
+		point = {"BOTTOM",self.Close,"TOP",0,2}
+	};
+
+	hooksecurefunc(GuildApplicantTrackerFrame,"SetShown",function()
+		--ns.print(debugstack());
+	end);
+
+	self:RegisterEvent("ADDON_LOADED");
+	self:RegisterEvent("PLAYER_ENTERING_WORLD");
+end
+
+

@@ -25,7 +25,7 @@
 		<Color r="1.0" g="0.6" b="0.6"/>
 	</Font>
 
-	<Texture name="GuildApplicantTrackerIcons" file="Interface\Addons\GuildApplicantTracker\media\ApplicantDeselectedIcons" virtual="true"> 
+	<Texture name="GuildApplicantTrackerIcons" file="Interface\Addons\GuildApplicantTracker\media\ApplicantSelectedIcons" desaturated="true" virtual="true"> 
 		<Size x="16" y="16" />
 	</Texture>
 
@@ -104,7 +104,7 @@
 					<Anchors> <Anchor point="LEFT" relativeKey="$parent.bRaid" relativePoint="RIGHT" /> </Anchors>
 					<TexCoords left="0" right=".31" top=".66" bottom=".96" />
 				</Texture>
-				<Texture parentKey="bNotes" inherits="GuildApplicantTrackerIcons">
+				<Texture parentKey="bComment" inherits="GuildApplicantTrackerIcons">
 					<Anchors> <Anchor point="LEFT" relativeKey="$parent.bPvP" relativePoint="RIGHT" x="8" /> </Anchors>
 					<TexCoords left=".64" right=".96" top=".66" bottom=".96" />
 				</Texture>
@@ -208,7 +208,9 @@
 			</ScrollFrame>
 		</Frames>
 		<Scripts>
-			<OnLoad function="GuildApplicantTracker_OnLoad" />
+			<OnLoad function="GuildApplicantTrackerFrame_OnLoad" />
+			<OnEvent function="GuildApplicantTrackerFrame_OnEvent" />
+			<OnShow function="GuildApplicantTrackerFrame_OnShow" />
 		</Scripts>
 	</Frame> 
 
