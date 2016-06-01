@@ -18,6 +18,8 @@ local libDBIcon = LibStub("LibDBIcon-1.0");
 local addon, ns = ...;
 local L = ns.L;
 local C = libColors.color;
+local Update={doIt=false,active=false,ticker_extra_timeout=false};
+local UpdateFrame = false;
 local applicants = {online={},offline={},names={}};
 local GetFriendInfo,GetGuildApplicantInfo = GetFriendInfo,GetGuildApplicantInfo;
 local AddOrRemoveFriend,RemoveFriend = AddOrRemoveFriend,RemoveFriend;
@@ -27,10 +29,9 @@ local EntryHeight,optionMenu;
 local EntryOffset = 2;
 local Enabled = nil;
 local new = {};
-local name_realm, level, class, bQuest, bDungeon, bRaid, bPvP, bRP, bWeekdays, bWeekends, bTank, bHealer, bDamage, comment, timeSince, timeLeft = 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16;
+local name_realm, level, class, bQuest, bDungeon, bRaid, bPvP, bRP, bWeekdays, bWeekends, bTank, bHealer, bDamage, comment, timeSince, timeLeft = 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16; -- index list for GetGuildApplicantInfo
 local name, realm, bComment, bFriend, bOnline = 17,18,19,20,21; -- add by applicantInfoToTable()
 local DoAddNew = false;
-local _counter = 0;
 local db_defaults = {
 	viewOffline       = false,
 	Minimap           = {enabled=true},
@@ -82,10 +83,13 @@ end
 
 local function addToFriendList()
 	if (DoAddNew) then
+		if not Update.InfoMsgPosted then
+			ns.print(L["Adding applicants to your friend list to track their online status."]);
+			Update.InfoMsgPosted=true;
+		end
 		local tmp,count,added={},0;
 		for i,v in pairs(new) do
 			if added==nil then
-				ns.print((L["Adding applicant %s to your friendlist."]):format(i));
 				AddOrRemoveFriend(i,"[GuildApplicant]");
 				added = i;
 			else
@@ -97,11 +101,10 @@ local function addToFriendList()
 		if count==0 then
 			wipe(new);
 			DoAddNew = false;
-			GuildApplicantTrackerFrame.elapse=-0.5;
-		else
-			GuildApplicantTrackerFrame.elapse=-1.5;
+			Update.InfoMsgPosted=false;
 		end
-		GuildApplicantTrackerFrame.doUpdate=true;
+		Update.timer_extra_timeout = 2;
+		Update.doIt=true;
 	end
 end
 
@@ -116,7 +119,6 @@ local function chkChatMsg(msg)
 	end
 	return false;
 end
-
 
 --[[ libDataBroker & libDBIcon ]]
 local function dataBrokerInit()
@@ -260,7 +262,7 @@ local function Lists_Update()
 		else
 			new[tmp[name_realm]] = true;
 			DoAddNew = true;
-			GuildApplicantTrackerFrame.doUpdate=true;
+			Update.doIt=true;
 		end
 		tinsert(_applicants[(tmp[bOnline]) and "online" or "offline"],tmp);
 		_applicants.names[tmp[name_realm]] = true;
@@ -481,23 +483,23 @@ function GuildApplicantTrackerFrame_ListUpdate()
 end
 
 function GuildApplicantTrackerFrame_OnShow(self)
-	--Lists_Update();
-	--GuildApplicantTrackerFrame_ListUpdate();
-	self.doUpdate=true;
+	Update.doIt=true;
 end
 
-local function GuildApplicantTrackerFrame_OnUpdate(self,elapse)
-	if self.doUpdate==true then
-		--if self.elapse>=0.5 then
-		--	self.elapse=0;
-			self.doUpdate=false;
-			if(DoAddNew)then
-				addToFriendList();
-			else
-				Lists_Update();
+local function GuildApplicantTrackerFrame_Ticker()
+	if Update.doIt==true then
+		if Update.ticker_extra_timeout~=false then
+			Update.ticker_extra_timeout=Update.ticker_extra_timeout-1;
+			if Update.ticker_extra_timeout<=0 then
+				Update.ticker_extra_timeout = false;
 			end
-		--end
-		--self.elapse = self.elapse + elapse;
+			return nil;
+		end
+		if(DoAddNew)then
+			addToFriendList();
+		else
+			Lists_Update();
+		end
 	end
 end
 
@@ -512,7 +514,7 @@ function GuildApplicantTrackerFrame_OnEvent(self,event,msg,...)
 				Pattern[v] = strtrim(gsub(_G[v],"%%s","(%%s+)"))
 			end
 		end
-		self.elapse=-3;
+		Update.timer_extra_timeout = 3; -- for 3. fallback C_Timer.After
 		ns.print(L["Addon loaded..."]);
 	elseif (event=="PLAYER_ENTERING_WORLD") then
 		-- defaults checkup
@@ -539,11 +541,8 @@ function GuildApplicantTrackerFrame_OnEvent(self,event,msg,...)
 			self:Show();
 		end
 
-		C_Timer.After(3,function()
-			C_Timer.NewTicker(0.4,function()
-				GuildApplicantTrackerFrame_OnUpdate(GuildApplicantTrackerFrame);
-			end);
-		end);
+		C_Timer.NewTicker(1, GuildApplicantTrackerFrame_Ticker);
+
 		RequestGuildRecruitmentSettings();
 		RequestGuildApplicantsList();
 	elseif event=="LF_GUILD_RECRUIT_LIST_CHANGED" then
@@ -581,7 +580,7 @@ function GuildApplicantTrackerFrame_OnEvent(self,event,msg,...)
 		end
 	end
 	if (update) then
-		self.doUpdate=true;
+		Update.doIt=true;
 	end
 end
 
@@ -608,12 +607,6 @@ function GuildApplicantTrackerFrame_OnLoad(self)
 		point = {"BOTTOM",self.Close,"TOP",0,2}
 	};
 
-	hooksecurefunc(GuildApplicantTrackerFrame,"SetShown",function()
-		--ns.print(debugstack());
-	end);
-
 	self:RegisterEvent("ADDON_LOADED");
 	self:RegisterEvent("PLAYER_ENTERING_WORLD");
 end
-
-
