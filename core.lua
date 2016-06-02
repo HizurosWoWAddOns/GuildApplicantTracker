@@ -28,7 +28,7 @@ local Pattern = {};
 local EntryHeight,optionMenu;
 local EntryOffset = 2;
 local Enabled = nil;
-local new = {};
+local new,State = {},{};
 local name_realm, level, class, bQuest, bDungeon, bRaid, bPvP, bRP, bWeekdays, bWeekends, bTank, bHealer, bDamage, comment, timeSince, timeLeft = 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16; -- index list for GetGuildApplicantInfo
 local name, realm, bComment, bFriend, bOnline = 17,18,19,20,21; -- add by applicantInfoToTable()
 local DoAddNew = false;
@@ -548,22 +548,26 @@ function GuildApplicantTrackerFrame_OnEvent(self,event,msg,...)
 	elseif event=="LF_GUILD_RECRUIT_LIST_CHANGED" then
 		RequestGuildApplicantsList();
 	elseif event=="GUILD_RANKS_UPDATE" then
-		if (not IsInGuild()) then
+		if not IsInGuild() and State.IsInGuild~=false then
 			if Enabled then
 				ns.print(L["Invite function disabled"],"("..L["You've left the guild."]..")");
 			else
 				ns.print(L["Invite function disabled"],"("..L["You are not in a guild."]..")");
 			end
+			State.IsInGuild = false;
 			Enabled = false;
-		elseif (not CanGuildInvite()) then
+		elseif not CanGuildInvite() and State.CanGuildInvite~=false then
 			if Enabled then
 				ns.print(L["Invite function disabled"],"("..L["You've lost the right to invite players."]..")");
 			else
 				ns.print(L["Invite function disabled"],"("..L["You've not the right to invite players."]..")");
 			end
+			State.CanGuildInvite = false;
 			Enabled = false;
-		else
+		elseif IsInGuild() and CanGuildInvite() then
 			Enabled = true;
+			State.IsInGuild = true;
+			State.CanGuildInvite = true;
 		end
 	elseif event=="LF_GUILD_RECRUITS_UPDATED" or event=="FRIENDLIST_UPDATE" then
 		update = true;
