@@ -611,6 +611,10 @@ function GuildApplicantTrackerFrame_OnLoad(self)
 		point = {"BOTTOM",self.Close,"TOP",0,2}
 	};
 
+	self:RegisterForDrag("LeftButton");
+	self:SetScript("OnDragStart", self.StartMoving);
+	self:SetScript("OnDragStop",  self.StopMovingOrSizing);
+
 	self:RegisterEvent("ADDON_LOADED");
 	self:RegisterEvent("PLAYER_ENTERING_WORLD");
 end
