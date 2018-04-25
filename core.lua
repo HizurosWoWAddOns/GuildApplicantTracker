@@ -8,7 +8,6 @@
 -- SavedVariables
 GuildApplicantTrackerDB = {}
 
-
 -- Libs
 local libColors = LibStub("LibColors-1.0");
 local libDataBroker = LibStub("LibDataBroker-1.1");
@@ -33,16 +32,14 @@ local name_realm, level, class, bQuest, bDungeon, bRaid, bPvP, bRP, bWeekdays, b
 local name, realm, bComment, bFriend, bOnline = 17,18,19,20,21; -- add by applicantInfoToTable()
 local DoAddNew = false;
 local db_defaults = {
+	showAddonLoaded = true,
 	viewOffline       = false,
-	Minimap           = {enabled=true},
+	Minimap           = {hide=false},
 	frameShow         = true,
 	PopupIfOnlineApps  = true,
 	--frameLock         = true,
 	--frameDock         = false,
 }
-
--- predeclare local function names...
-local GuildApplicantTrackerFrame_ListUpdate
 
 
 --[[ misc functions ]]
@@ -59,6 +56,12 @@ function ns.print(...)
 		tinsert(t,v);
 	end
 	print(unpack(t));
+end
+
+function ns.debug(...)
+	if GetAddOnMetadata(addon,"Version")=="@".."project-version".."@" then
+		ns.print("debug",...);
+	end
 end
 
 local function whisperToApplicant(self,button)
@@ -168,10 +171,7 @@ local function dataBrokerInit()
 		})
 
 		if (libDBIcon) then
-			libDBIcon:Register(L[addon],obj,GuildApplicantTrackerDB.Minimap)
-			if (not GuildApplicantTrackerDB.Minimap.enabled) then
-				libDBIcon:Hide(L[addon]);
-			end
+			libDBIcon:Register(addon,obj,GuildApplicantTrackerDB.Minimap);
 		end
 	end
 end
@@ -285,7 +285,7 @@ local function Lists_Update()
 		obj.text = ("%s/%s"):format(C("green",#applicants.online),GetNumGuildApplicants());
 	end
 
-	GuildApplicantTrackerFrame_ListUpdate();
+	GuildApplicantTrackerFrame:ListUpdate();
 end
 
 
@@ -318,17 +318,12 @@ end
 --[[ global control functions ]]
 function GuildApplicantTracker_ToggleOffline(self,button)
 	GuildApplicantTrackerDB.viewOffline = not GuildApplicantTrackerDB.viewOffline;
-	GuildApplicantTrackerFrame_ListUpdate();
+	GuildApplicantTrackerFrame:ListUpdate();
 end
 
 function GuildApplicantTracker_ToggleMinimap()
-	if (GuildApplicantTrackerDB.Minimap.enabled) then
-		GuildApplicantTrackerDB.Minimap.enabled = false;
-		libDBIcon:Hide(L[addon]);
-	else
-		GuildApplicantTrackerDB.Minimap.enabled = true;
-		libDBIcon:Show(L[addon]);
-	end
+	GuildApplicantTrackerDB.Minimap.hide = not GuildApplicantTrackerDB.Minimap.hide;
+	libDBIcon:Show(addon);
 end
 
 function GuildApplicantTracker_Toggle(force)
@@ -360,7 +355,7 @@ end
 
 --[[ option menu ]]
 function optionMenu(parent,anchorA,anchorB)
-	PlaySound("igMainMenuOptionCheckBoxOn");
+	PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 	ns.MenuGenerator.InitializeMenu();
 	ns.MenuGenerator.addEntry({
 		{ label = SETTINGS, title=true },
@@ -372,7 +367,7 @@ function optionMenu(parent,anchorA,anchorB)
 		{ separator=true },
 		{
 			label = L["Show minimap button"], tooltip = {L["Minimap"],L["Show or hide minimap button"]},
-			checked = function() return GuildApplicantTrackerDB.Minimap.enabled; end,
+			checked = function() return not GuildApplicantTrackerDB.Minimap.hide; end,
 			func = function() GuildApplicantTracker_ToggleMinimap(); end
 		},
 		{
@@ -401,7 +396,8 @@ function optionMenu(parent,anchorA,anchorB)
 end
 
 --[[ trackerframe functions ]]
-function GuildApplicantTrackerFrame_ListUpdate()
+GuildApplicantTrackerFrame_Mixin = {};
+function GuildApplicantTrackerFrame_Mixin:ListUpdate()
 	local scroll = GuildApplicantTrackerContainer;
 	local button, index, offset, nButtons, nOnline, applicant;
 	offset = HybridScrollFrame_GetOffset(scroll);
@@ -482,7 +478,7 @@ function GuildApplicantTrackerFrame_ListUpdate()
 	HybridScrollFrame_Update(scroll, visibleEntries * height, nButtons * height);
 end
 
-function GuildApplicantTrackerFrame_OnShow(self)
+function GuildApplicantTrackerFrame_Mixin:OnShow()
 	Update.doIt=true;
 end
 
@@ -503,9 +499,25 @@ local function GuildApplicantTrackerFrame_Ticker()
 	end
 end
 
-function GuildApplicantTrackerFrame_OnEvent(self,event,msg,...)
+function GuildApplicantTrackerFrame_Mixin:OnEvent(event,msg,...)
 	local update = false;
 	if (event=="ADDON_LOADED") and (msg==addon) then
+		-- defaults checkup
+		if GuildApplicantTrackerDB==nil then
+			GuildApplicantTrackerDB = CopyTable(db_defaults);
+		else
+			if GuildApplicantTrackerDB.Minimap and GuildApplicantTrackerDB.Minimap.enabled~=nil then
+				GuildApplicantTrackerDB.Minimap.hide = not GuildApplicantTrackerDB.Minimap.enabled;
+				GuildApplicantTrackerDB.Minimap.enabled=nil
+			end
+			for i,v in pairs(db_defaults) do
+				if (GuildApplicantTrackerDB[i]==nil) then
+					GuildApplicantTrackerDB[i] = v;
+				end
+			end
+		end
+
+		-- prepare pattern strings
 		for _,v in ipairs({"ERR_FRIEND_ONLINE_SS","ERR_FRIEND_OFFLINE_S","ERR_FRIEND_REMOVED_S","ERR_GUILD_INVITE_S",
 			"ERR_GUILD_DECLINE_AUTO_S","ERR_GUILD_DECLINE_S","ERR_GUILD_JOIN_S","ERR_FRIEND_ADDED_S"}) do
 			if(_G[v]:find("\12Hplayer"))then
@@ -514,16 +526,13 @@ function GuildApplicantTrackerFrame_OnEvent(self,event,msg,...)
 				Pattern[v] = strtrim(gsub(_G[v],"%%s","(%%s+)"))
 			end
 		end
-		Update.timer_extra_timeout = 3; -- for 3. fallback C_Timer.After
-		ns.print(L["Addon loaded..."]);
-	elseif (event=="PLAYER_ENTERING_WORLD") then
-		-- defaults checkup
-		for i,v in pairs(db_defaults) do
-			if (GuildApplicantTrackerDB[i]==nil) then
-				GuildApplicantTrackerDB[i] = v;
-			end
-		end
 
+		Update.timer_extra_timeout = 3; -- for 3. fallback C_Timer.After
+
+		if GuildApplicantTrackerDB.showAddOnLoaded then
+			ns.print(L["Addon loaded..."]);
+		end
+	elseif (event=="PLAYER_ENTERING_WORLD") then
 		-- databroker & minimap
 		dataBrokerInit();
 
@@ -588,17 +597,17 @@ function GuildApplicantTrackerFrame_OnEvent(self,event,msg,...)
 	end
 end
 
-function GuildApplicantTrackerFrame_OnLoad(self)
+function GuildApplicantTrackerFrame_Mixin:OnLoad()
 	if (not self) and (self~=_G['GuildApplicantTrackerFrame']) then return end
 
-	self.Scroll.update = GuildApplicantTrackerFrame_ListUpdate;
+	self.Scroll.update = GuildApplicantTrackerFrame_Mixin.ListUpdate;
 	HybridScrollFrame_CreateButtons(self.Scroll, "GuildApplicantTrackerEntryTemplate", 0, 0, nil, nil, 0, -EntryOffset);
 	EntryHeight = self.Scroll.buttons[1]:GetHeight();
 	if (select(4,GetBuildInfo())<60000) then
 		self.Scroll.buttons[2]:SetPoint("TOPLEFT",self.Scroll.buttons[1],"BOTTOMLEFT",1,(-EntryOffset) - 1)
 	end
-	GuildApplicantTrackerFrame_ListUpdate();
-	
+	self:ListUpdate();
+
 	self.Config:SetScript("OnClick",function(self) optionMenu(self,"TOPRIGHT","BOTTOMRIGHT") end);
 	self.Config.tooltip ={
 		title = SETTINGS,

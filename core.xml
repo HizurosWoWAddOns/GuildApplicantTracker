@@ -25,7 +25,7 @@
 		<Color r="1.0" g="0.6" b="0.6"/>
 	</Font>
 
-	<Texture name="GuildApplicantTrackerIcons" file="Interface\Addons\GuildApplicantTracker\media\ApplicantSelectedIcons" desaturated="true" virtual="true"> 
+	<Texture name="GuildApplicantTrackerIcons" file="Interface\Addons\GuildApplicantTracker\media\ApplicantSelectedIcons" desaturated="true" virtual="true">
 		<Size x="16" y="16" />
 	</Texture>
 
@@ -132,7 +132,7 @@
 		</Scripts>
 	</Button>
 
-	<Frame name="GuildApplicantTrackerFrame" parent="UIParent" hidden="true" movable="TRUE" enableMouse="TRUE" toplevel="TRUE" clampedToScreen="TRUE">
+	<Frame name="GuildApplicantTrackerFrame" mixin="GuildApplicantTrackerFrame_Mixin" parent="UIParent" hidden="true" movable="TRUE" enableMouse="TRUE" toplevel="TRUE" clampedToScreen="TRUE">
 		<Size x="260" y="204" />
 		<Anchors> <Anchor point="RIGHT" x="-30" y="2" /> </Anchors>
 		<Layers>
@@ -202,10 +202,10 @@
 			</ScrollFrame>
 		</Frames>
 		<Scripts>
-			<OnLoad function="GuildApplicantTrackerFrame_OnLoad" />
-			<OnEvent function="GuildApplicantTrackerFrame_OnEvent" />
-			<OnShow function="GuildApplicantTrackerFrame_OnShow" />
+			<OnLoad method="OnLoad" />
+			<OnEvent method="OnEvent" />
+			<OnShow method="OnShow" />
 		</Scripts>
-	</Frame> 
+	</Frame>
 
 </Ui>
