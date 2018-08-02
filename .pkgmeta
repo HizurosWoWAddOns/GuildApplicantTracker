@@ -21,6 +21,10 @@ externals:
 		url: https://repos.curseforge.com/wow/libstringcoloring-1-0
 		tag: latest
 
+	libs/LibDropDownMenu:
+		url: https://repos.curseforge.com/wow/libdropdownmenu
+		tag: latest
+
 enable-nolib-creation: yes
 
 ignore:

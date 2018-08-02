@@ -12,6 +12,7 @@ GuildApplicantTrackerDB = {}
 local libColors = LibStub("LibColors-1.0");
 local libDataBroker = LibStub("LibDataBroker-1.1");
 local libDBIcon = LibStub("LibDBIcon-1.0");
+local libDropDownMenu = LibStub("LibDropDownMenu");
 
 -- Local variables
 local addon, ns = ...;
@@ -58,9 +59,10 @@ function ns.print(...)
 	print(unpack(t));
 end
 
+local debugMode = "@project-version@"=="@".."project-version".."@";
 function ns.debug(...)
-	if GetAddOnMetadata(addon,"Version")=="@".."project-version".."@" then
-		ns.print("debug",...);
+	if debugMode then
+		ns.print("<debug>",...);
 	end
 end
 
@@ -354,45 +356,28 @@ function GuildApplicantTracker_ResetFrame()
 end
 
 --[[ option menu ]]
-function optionMenu(parent,anchorA,anchorB)
+local separator = { text="", dist=0, isTitle=true, notCheckable=true, isNotRadio=true, sUninteractable=true, iconOnly=true, icon="Interface\\Common\\UI-TooltipDivider-Transparent", tCoordLeft=0, tCoordRight=1, tCoordTop=0, tCoordBottom=1, tFitDropDownSizeX=true, tSizeX=0, tSizeY=8, iconInfo={tCoordLeft=0, tCoordRight=1, tCoordTop=0, tCoordBottom=1, tFitDropDownSizeX=true, tSizeX=0, tSizeY=8} };
+local MenuList,MenuFrame = {
+	{ text = SETTINGS, isTitle=true, isNotRadio = true, notCheckable = true },
+	separator,
+	{ text = L["Show/Hide GuildApplicantTracker"], func = GuildApplicantTracker_Toggle, isNotRadio = true, notCheckable = true },
+	separator,
+	{ text = L["Show minimap button"], tooltipTitle = L["Minimap"], tooltipText = L["Show or hide minimap button"], checked = function() return not GuildApplicantTrackerDB.Minimap.hide; end, func = GuildApplicantTracker_ToggleMinimap, isNotRadio = true, notCheckable = true },
+	{ text = L["Show offline applicants"], tooltipTitle = L["Offline applicants"], tooltipText = L["Show or hide offline applicants"], checked = function() return GuildApplicantTrackerDB.viewOffline; end, func = GuildApplicantTracker_ToggleOffline, isNotRadio = true, notCheckable = true },
+	{ text = L["Popup frame if applicant online"], checked = function() return GuildApplicantTrackerDB.PopupIfOnlineApps; end, func = function() GuildApplicantTrackerDB.PopupIfOnlineApps = not GuildApplicantTrackerDB.PopupIfOnlineApps; end, isNotRadio = true, notCheckable = true },
+	separator,
+	{ text = L["Reset frame position"], tooltipTitle = L["Reset frame position"], tooltipText = L["If the frame out of screen, you can reset its position with this option"], func = GuildApplicantTracker_ResetFrame, isNotRadio = true, notCheckable = true },
+	{ text = L["Reset addon settings"], func = GuildApplicantTracker_Reset, isNotRadio = true, notCheckable = true },
+};
+
+function optionMenu(parent,point,relativePoint)
 	PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
-	ns.MenuGenerator.InitializeMenu();
-	ns.MenuGenerator.addEntry({
-		{ label = SETTINGS, title=true },
-		{ separator=true },
-		{
-			label = L["Show/Hide GuildApplicantTracker"], --tooltip={L[""],L[""]},
-			func = GuildApplicantTracker_Toggle
-		},
-		{ separator=true },
-		{
-			label = L["Show minimap button"], tooltip = {L["Minimap"],L["Show or hide minimap button"]},
-			checked = function() return not GuildApplicantTrackerDB.Minimap.hide; end,
-			func = function() GuildApplicantTracker_ToggleMinimap(); end
-		},
-		{
-			label = L["Show offline applicants"], tooltip={L["Offline applicants"],L["Show or hide offline applicants"]},
-			checked = function() return GuildApplicantTrackerDB.viewOffline; end,
-			func = function() GuildApplicantTracker_ToggleOffline(); end
-		},
-		{
-			label = L["Popup frame if applicant online"], --tooltip={L[""],L[""]},
-			checked = function() return GuildApplicantTrackerDB.PopupIfOnlineApps; end,
-			func = function() GuildApplicantTrackerDB.PopupIfOnlineApps = not GuildApplicantTrackerDB.PopupIfOnlineApps; end
-		},
-		{ separator=true },
-		{
-			label = L["Reset frame position"], tooltip={L["Reset frame position"],L["If the frame out of screen, you can reset its position with this option"]},
-			--checked = function() return GuildApplicantTrackerDB. end.
-			func = function() GuildApplicantTracker_ResetFrame(); end
-		},
-		{
-			label = L["Reset addon settings"], --tooltip={},
-			--checked = function() end,
-			func = function() GuildApplicantTracker_Reset(); end
-		},
-	});
-	ns.MenuGenerator.ShowMenu(parent, anchorA, anchorB);
+	if not MenuFrame then
+		MenuFrame = libDropDownMenu.Create_DropDownMenu("GuildApplicantTracker_LibDropDownMenu",UIParent);
+	end
+	MenuFrame.point = point or "TOPLEFT";
+	MenuFrame.relativePoint = relativePoint or "BOTTOMLEFT";
+	libDropDownMenu.EasyMenu(MenuList, MenuFrame, parent, 0, 0, "MENU");
 end
 
 --[[ trackerframe functions ]]

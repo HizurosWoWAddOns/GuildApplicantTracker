@@ -2,7 +2,6 @@
 ..\..\FrameXML\UI.xsd">
 
 	<Script file="core.lua"/>
-	<Script file="MenuGenerator.lua" />
 	<Script file="chatcommand.lua" />
 
 	<Font name="GuildApplicantTrackerFont_Realm" virtual="true" inherits="SystemFont_Tiny">
