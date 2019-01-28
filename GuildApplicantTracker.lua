@@ -225,13 +225,13 @@ StaticPopupDialogs["GUILDAPPLICANTDECLINE"] = {
 	hideOnEscape = 1
 };
 
-local function GuildApplicantTrackerFrame_Invite(self)
+local function GuildApplicantTracker_Invite(self)
 	local name = self:GetParent().player;
 	-- 5 times... its no longer save in 6.0 which param transport into the popup as "self.data"
 	StaticPopup_Show("GUILDAPPLICANTINVITE",nil,nil,name);
 end
 
-local function GuildApplicantTrackerFrame_Decline(self)
+local function GuildApplicantTracker_Decline(self)
 	local name = self:GetParent().player;
 	StaticPopup_Show("GUILDAPPLICANTDECLINE",nil,nil,name);
 end
@@ -279,7 +279,7 @@ local function Lists_Update()
 	applicants = _applicants;
 
 	if(#applicants.online>0 and GuildApplicantTrackerDB.PopupIfOnlineApps)then
-		GuildApplicantTracker_Toggle(true);
+		GuildApplicantTracker:Toggle(true);
 	end
 
 	if (libDataBroker) then
@@ -287,12 +287,13 @@ local function Lists_Update()
 		obj.text = ("%s/%s"):format(C("green",#applicants.online),GetNumGuildApplicants());
 	end
 
-	GuildApplicantTrackerFrame:ListUpdate();
+	GuildApplicantTracker:ListUpdate();
 end
 
 
 --[[ tooltip functions ]]
-function GuildApplicantTrackerTooltip_OnEnter(self)
+GuildApplicantTrackerTooltipMixin = {};
+function GuildApplicantTrackerTooltipMixin:OnEnter(self)
 	if type(self.tooltip)=="table" then
 		if (self.tooltip.point) then
 			GameTooltip:SetOwner(self.tooltip.owner or self, "ANCHOR_NONE");
@@ -312,47 +313,8 @@ function GuildApplicantTrackerTooltip_OnEnter(self)
 	end
 end
 
-function GuildApplicantTrackerTooltip_OnLeave()
+function GuildApplicantTrackerTooltipMixin:OnLeave()
 	GameTooltip:Hide();
-end
-
-
---[[ global control functions ]]
-function GuildApplicantTracker_ToggleOffline(self,button)
-	GuildApplicantTrackerDB.viewOffline = not GuildApplicantTrackerDB.viewOffline;
-	GuildApplicantTrackerFrame:ListUpdate();
-end
-
-function GuildApplicantTracker_ToggleMinimap()
-	GuildApplicantTrackerDB.Minimap.hide = not GuildApplicantTrackerDB.Minimap.hide;
-	libDBIcon:Show(addon);
-end
-
-function GuildApplicantTracker_Toggle(force)
-	local state = force==true and true or not GuildApplicantTrackerFrame:IsShown();
-	GuildApplicantTrackerFrame:SetShown(state);
-	GuildApplicantTrackerDB.frameShow = state;
-end
-
-function GuidlApplicantTracker_ToggleOption(key,force)
-	if force~=nil then
-		GuildApplicantTrackerDB[key] = force;
-	else
-		GuildApplicantTrackerDB[key] = not GuildApplicantTrackerDB[key];
-	end
-	return GuildApplicantTrackerDB[key];
-end
-
-function GuildApplicantTracker_Reset()
-	GuildApplicantTrackerDB = db_defaults;
-end
-
-function GuildApplicantTracker_ResetFrame()
-	local f=GuildApplicantTrackerFrame;
-	f:SetUserPlaced(false);
-	f:ClearAllPoints();
-	f:SetPoint("RIGHT",-30,2);
-	f:SetUserPlaced(true);
 end
 
 --[[ option menu ]]
@@ -380,9 +342,49 @@ function optionMenu(parent,point,relativePoint)
 	libDropDownMenu.EasyMenu(MenuList, MenuFrame, parent, 0, 0, "MENU");
 end
 
---[[ trackerframe functions ]]
-GuildApplicantTrackerFrame_Mixin = {};
-function GuildApplicantTrackerFrame_Mixin:ListUpdate()
+--[[ tracker frame functions ]]
+GuildApplicantTrackerMixin = {};
+
+function GuildApplicantTrackerMixin:ToggleOffline(button)
+	GuildApplicantTrackerDB.viewOffline = not GuildApplicantTrackerDB.viewOffline;
+	GuildApplicantTracker:ListUpdate();
+end
+
+function GuildApplicantTrackerMixin:ToggleMinimap()
+	GuildApplicantTrackerDB.Minimap.hide = not GuildApplicantTrackerDB.Minimap.hide;
+	libDBIcon:Show(addon);
+end
+
+function GuildApplicantTrackerMixin:Toggle(state)
+	if state==nil then
+		state = not GuildApplicantTracker:IsShown();
+	end
+	GuildApplicantTracker:SetShown(state);
+	GuildApplicantTrackerDB.frameShow = state;
+end
+
+function GuildApplicantTrackerMixin:ToggleOption(key,force)
+	if force~=nil then
+		GuildApplicantTrackerDB[key] = force;
+	else
+		GuildApplicantTrackerDB[key] = not GuildApplicantTrackerDB[key];
+	end
+	return GuildApplicantTrackerDB[key];
+end
+
+function GuildApplicantTrackerMixin:Reset()
+	GuildApplicantTrackerDB = db_defaults;
+end
+
+function GuildApplicantTrackerMixin:ResetFrame()
+	local f=GuildApplicantTracker;
+	f:SetUserPlaced(false);
+	f:ClearAllPoints();
+	f:SetPoint("RIGHT",-30,2);
+	f:SetUserPlaced(true);
+end
+
+function GuildApplicantTrackerMixin:ListUpdate()
 	local scroll = GuildApplicantTrackerContainer;
 	local button, index, offset, nButtons, nOnline, applicant;
 	offset = HybridScrollFrame_GetOffset(scroll);
@@ -433,8 +435,8 @@ function GuildApplicantTrackerFrame_Mixin:ListUpdate()
 					button.Invite:Hide();
 					button:SetScript("OnClick",nil);
 				end
-				button.Invite:SetScript("OnClick",GuildApplicantTrackerFrame_Invite);
-				button.Decline:SetScript("OnClick",GuildApplicantTrackerFrame_Decline);
+				button.Invite:SetScript("OnClick",GuildApplicantTracker_Invite);
+				button.Decline:SetScript("OnClick",GuildApplicantTracker_Decline);
 			else
 				button.Status:Hide();
 				button.Invite:Hide();
@@ -448,7 +450,7 @@ function GuildApplicantTrackerFrame_Mixin:ListUpdate()
 				point = {"RIGHT",button,"LEFT",-2,0}
 			};
 
-			button.player = applicant[name_realm]; -- for whisperToApplicant, GuildApplicantTrackerFrame_Invite and GuildApplicantTrackerFrame_Decline
+			button.player = applicant[name_realm]; -- for whisperToApplicant, GuildApplicantTracker_Invite and GuildApplicantTracker_Decline
 			button:Show();
 		else
 			button:Hide();
@@ -463,11 +465,11 @@ function GuildApplicantTrackerFrame_Mixin:ListUpdate()
 	HybridScrollFrame_Update(scroll, visibleEntries * height, nButtons * height);
 end
 
-function GuildApplicantTrackerFrame_Mixin:OnShow()
+function GuildApplicantTrackerMixin:OnShow()
 	Update.doIt=true;
 end
 
-local function GuildApplicantTrackerFrame_Ticker()
+local function GuildApplicantTracker_Ticker()
 	if Update.doIt==true then
 		if Update.ticker_extra_timeout~=false then
 			Update.ticker_extra_timeout=Update.ticker_extra_timeout-1;
@@ -484,7 +486,7 @@ local function GuildApplicantTrackerFrame_Ticker()
 	end
 end
 
-function GuildApplicantTrackerFrame_Mixin:OnEvent(event,msg,...)
+function GuildApplicantTrackerMixin:OnEvent(event,msg,...)
 	local update = false;
 	if (event=="ADDON_LOADED") and (msg==addon) then
 		-- defaults checkup
@@ -517,12 +519,9 @@ function GuildApplicantTrackerFrame_Mixin:OnEvent(event,msg,...)
 		if GuildApplicantTrackerDB.showAddOnLoaded then
 			ns.print(L["Addon loaded..."]);
 		end
-	elseif (event=="PLAYER_ENTERING_WORLD") then
+	elseif (event=="PLAYER_LOGIN") then
 		-- databroker & minimap
 		dataBrokerInit();
-
-		-- unset event
-		self:UnregisterEvent(event);
 
 		-- set events
 		self:RegisterEvent("LF_GUILD_RECRUITS_UPDATED");
@@ -530,12 +529,11 @@ function GuildApplicantTrackerFrame_Mixin:OnEvent(event,msg,...)
 		self:RegisterEvent("FRIENDLIST_UPDATE");
 		self:RegisterEvent("GUILD_RANKS_UPDATE");
 
-
 		if GuildApplicantTrackerDB.frameShow then
 			self:Show();
 		end
 
-		C_Timer.NewTicker(1, GuildApplicantTrackerFrame_Ticker);
+		C_Timer.NewTicker(1, GuildApplicantTracker_Ticker);
 
 		RequestGuildRecruitmentSettings();
 		RequestGuildApplicantsList();
@@ -582,10 +580,10 @@ function GuildApplicantTrackerFrame_Mixin:OnEvent(event,msg,...)
 	end
 end
 
-function GuildApplicantTrackerFrame_Mixin:OnLoad()
-	if (not self) and (self~=_G['GuildApplicantTrackerFrame']) then return end
+function GuildApplicantTrackerMixin:OnLoad()
+	if (not self) and (self~=_G['GuildApplicantTracker']) then return end
 
-	self.Scroll.update = GuildApplicantTrackerFrame_Mixin.ListUpdate;
+	self.Scroll.update = GuildApplicantTrackerMixin.ListUpdate;
 	HybridScrollFrame_CreateButtons(self.Scroll, "GuildApplicantTrackerEntryTemplate", 0, 0, nil, nil, 0, -EntryOffset);
 	EntryHeight = self.Scroll.buttons[1]:GetHeight();
 	if (select(4,GetBuildInfo())<60000) then
@@ -610,5 +608,7 @@ function GuildApplicantTrackerFrame_Mixin:OnLoad()
 	self:SetScript("OnDragStop",  self.StopMovingOrSizing);
 
 	self:RegisterEvent("ADDON_LOADED");
-	self:RegisterEvent("PLAYER_ENTERING_WORLD");
+	self:RegisterEvent("PLAYER_LOGIN");
+
+	GuildApplicantTrackerMixin = nil;
 end
