@@ -15,4 +15,4 @@ libs\LibColors-1.0\LibColors-1.0.xml
 #@end-no-lib-strip@
 
 localizations\core.xml
-core.xml
+GuildApplicantTracker.xml
