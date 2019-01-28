@@ -16,8 +16,7 @@ local libDropDownMenu = LibStub("LibDropDownMenu");
 
 -- Local variables
 local addon, ns = ...;
-local L = ns.L;
-local C = libColors.color;
+local L,C = ns.L,libColors.color;
 local Update={doIt=false,active=false,ticker_extra_timeout=false};
 local UpdateFrame = false;
 local applicants = {online={},offline={},names={}};

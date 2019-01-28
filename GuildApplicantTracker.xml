@@ -140,11 +140,6 @@
 				<Texture parentKey="LabelBG" atlas="Objective-Header" useAtlasSize="true">
 					<Anchors> <Anchor point="TOP" x="6" /> </Anchors>
 				</Texture>
-				<Texture file="Interface\QuestFrame\ObjectiveTracker">
-					<Size x="300" y="16" />
-					<Anchors> <Anchor point="BOTTOM" y="-3" /> </Anchors>
-					<TexCoords left="0" right="0.4296875" top="0.59375" bottom="0.49609375" />
-				</Texture>
 			</Layer>
 			<Layer level="ARTWORK">
 				<FontString parentKey="Label" inherits="GameFontNormal" text="GuildApplicantTracker">

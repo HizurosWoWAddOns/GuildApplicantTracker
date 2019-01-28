@@ -7,16 +7,16 @@ SlashCmdList["GUILDAPPLICANTTRACKER"] = function(cmd)
 	cmd = cmd:lower()
 
 	if cmd=="toggle" then
-		GuildApplicantTracker_Toggle()
+		GuildApplicantTracker:Toggle()
 	elseif cmd=="offline" then
-		GuildApplicantTracker_ToggleOffline()
+		GuildApplicantTracker:ToggleOffline()
 	elseif cmd=="minimap" then
-		GuildApplicantTracker_ToggleMinimap();
+		GuildApplicantTracker:ToggleMinimap();
 	elseif cmd=="reset" then
-		GuildApplicantTracker_Reset();
+		GuildApplicantTracker:Reset();
 		ReloadUI();
 	elseif cmd=="resetframe" then
-		GuildApplicantTracker_ResetFrame();
+		GuildApplicantTracker:ResetFrame();
 	else
 		print(L["Commandline options for %s"]:format(addon));
 		print("   "..L["Usage: /gat <command>"]);
