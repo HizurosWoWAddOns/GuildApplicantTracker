@@ -106,7 +106,7 @@ local function updateApplicants()
 		for _,applicant in ipairs(applicantList) do
 			if applicant.clubFinderGUID then
 				currentGUIDs[applicant.clubFinderGUID]=true;
-				if not GuildApplicantTrackerDB.knownGUIDs[applicant.clubFinderGUID]==nil then
+				if GuildApplicantTrackerDB.knownGUIDs[applicant.clubFinderGUID]==nil then
 					GuildApplicantTrackerDB.knownGUIDs[applicant.clubFinderGUID]=true;
 					hasNewPlayer = true;
 				end
