@@ -6,6 +6,8 @@
 ## SavedVariables: GuildApplicantTrackerDB
 ## OptionalDeps: LibStub, CallbackHandler-1.0, LibDataBroker-1.1, LibDBIcon-1.0, Ace3
 
+## X-Curse-Project-ID: 85029
+
 #@no-lib-strip@
 libs\LibStub\LibStub.lua
 libs\CallbackHandler-1.0\CallbackHandler-1.0.lua
