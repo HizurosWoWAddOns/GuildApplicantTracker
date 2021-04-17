@@ -162,11 +162,15 @@ local function dataBrokerInit()
 			end,
 			--OnDoubleClick = nil,
 			OnTooltipShow = function(tt)
-				tt:AddDoubleLine(addon,#applicantList);
-				tt:AddLine(" ");
-				for i=1, #applicantList do
-					local localizedClass, englishClass, localizedRace, englishRace, sex, playerName, realm = GetPlayerInfoByGUID(applicantList[i].playerGUID);
-					tt:AddDoubleLine(C(englishClass:upper(),applicantList[i].name),C("dkyellow",realm or GetRealmName()));
+				if applicantList then
+					tt:AddDoubleLine(addon,#applicantList);
+					tt:AddLine(" ");
+					for i=1, #applicantList do
+						local localizedClass, englishClass, localizedRace, englishRace, sex, playerName, realm = GetPlayerInfoByGUID(applicantList[i].playerGUID);
+						tt:AddDoubleLine(C(englishClass:upper(),applicantList[i].name),C("dkyellow",realm or GetRealmName()));
+					end
+				else
+					tt:AddLine(L["Recruiting disabled"]);
 				end
 				tt:AddLine(" ");
 				tt:AddLine("|c"..colors.copper..L["TooltipHintLeftClick"]:gsub("#","\124r|||c"..colors.green).."|r");
@@ -183,6 +187,7 @@ end
 
 --[[ tooltip functions mixin ]]
 GuildApplicantTrackerTooltipMixin = {};
+
 function GuildApplicantTrackerTooltipMixin:OnEnter()
 	if type(self.tooltip)=="table" then
 		if (self.tooltip.point) then
@@ -210,6 +215,7 @@ end
 
 --[[ applicant list entry functions mixin ]]
 GuildApplicantTrackerEntryMixin = {};
+
 function GuildApplicantTrackerEntryMixin:RespondToApplicant(shouldInvite)
 	local info = self.Info;
 	if self.Info and self.Info.clubFinderGUID then
@@ -243,7 +249,7 @@ end
 
 function GuildApplicantTrackerListMixin:update()
 	local scroll = GuildApplicantTrackerContainer;
-	local button, index, offset, nButtons, applicant;
+	local button, index, offset, nButtons, applicant, GetPlayerInfoByGUID_Error;
 	offset = HybridScrollFrame_GetOffset(scroll);
 	nButtons = #scroll.buttons;
 	local numApplicants = (applicantList and #applicantList) or 0;
@@ -256,52 +262,58 @@ function GuildApplicantTrackerListMixin:update()
 		if applicant then
 			local localizedClass, englishClass, localizedRace, englishRace, sex, playerName, realm = GetPlayerInfoByGUID(applicant.playerGUID);
 
-			button.Info = applicant;
-			-- level
-			button.Level:SetText(applicant.level);
-			-- name
-			button.Name:SetText(C(englishClass:upper(),applicant.name));
-			-- realm
-			button.Realm:SetText(realm);
-			-- class icon
-			button.Class:SetTexCoord(unpack(CLASS_ICON_TCOORDS[englishClass]));
-			-- tank role icon
-			buttonIconUpdate(button,"bTank",applicant.roles.TANK);
-			-- healer role icon
-			buttonIconUpdate(button,"bHealer",applicant.roles.HEALER);
-			-- damager role icon
-			buttonIconUpdate(button,"bDamage",applicant.roles.DAMAGER);
-			-- comment icon
-			buttonIconUpdate(button,"bComment",applicant.message and applicant.message:trim()~="");
+			if localizedClass then
+				button.Info = applicant;
+				-- level
+				button.Level:SetText(applicant.level);
+				-- name
+				button.Name:SetText(C(englishClass:upper(),applicant.name));
+				-- realm
+				button.Realm:SetText(realm);
+				-- class icon
+				button.Class:SetTexCoord(unpack(CLASS_ICON_TCOORDS[englishClass]));
+				-- tank role icon
+				buttonIconUpdate(button,"bTank",applicant.roles.TANK);
+				-- healer role icon
+				buttonIconUpdate(button,"bHealer",applicant.roles.HEALER);
+				-- damager role icon
+				buttonIconUpdate(button,"bDamage",applicant.roles.DAMAGER);
+				-- comment icon
+				buttonIconUpdate(button,"bComment",applicant.message and applicant.message:trim()~="");
 
-			local ttLines = {
-				UNIT_TYPE_LEVEL_TEMPLATE:format(applicant.level, localizedClass),
-				" ",
-				CLUB_FINDER_SPECIALIZATIONS,
-				(applicant.message and applicant.message:trim()~="") or C("gray",L["No comment..."])
-			};
+				local ttLines = {
+					UNIT_TYPE_LEVEL_TEMPLATE:format(applicant.level, localizedClass),
+					" ",
+					CLUB_FINDER_SPECIALIZATIONS,
+					(applicant.message and applicant.message:trim()~="") or C("gray",L["No comment..."])
+				};
 
-			if #applicant.specIds == 0 then
-				tinsert(ttLines,C("red",CLUB_FINDER_APPLICANT_LIST_NO_MATCHING_SPECS));
-			else
-				for _, specID in ipairs(applicant.specIds) do
-					tinsert(ttLines, CommunitiesUtil.GetRoleSpecClassLine(applicant.classID, specID));
+				if #applicant.specIds == 0 then
+					tinsert(ttLines,C("red",CLUB_FINDER_APPLICANT_LIST_NO_MATCHING_SPECS));
+				else
+					for _, specID in ipairs(applicant.specIds) do
+						tinsert(ttLines, CommunitiesUtil.GetRoleSpecClassLine(applicant.classID, specID));
+					end
 				end
-			end
-			if applicant.message ~= "" then
-				tinsert(ttLines," ");
-				tinsert(ttLines,C("gray",CLUB_FINDER_CLUB_DESCRIPTION:format(applicant.message)));
-			end
+				if applicant.message ~= "" then
+					tinsert(ttLines," ");
+					tinsert(ttLines,C("gray",CLUB_FINDER_CLUB_DESCRIPTION:format(applicant.message)));
+				end
 
-			button.tooltip = {
-				title = C(englishClass,applicant.name),
-				lines = ttLines,
-				point = {"RIGHT",button,"LEFT",-2,0}
-			};
+				button.tooltip = {
+					title = C(englishClass,applicant.name),
+					lines = ttLines,
+					point = {"RIGHT",button,"LEFT",-2,0}
+				};
 
-			button.player = nil
-			button:Show();
-		else
+				button.player = nil
+				button:Show();
+				applicant = true;
+			else
+				GetPlayerInfoByGUID_Error = true;
+			end
+		end
+		if applicant~=true then
 			button.Info = nil;
 			button.player = nil;
 			button:Hide();
@@ -310,6 +322,10 @@ function GuildApplicantTrackerListMixin:update()
 
 	local height = EntryHeight + EntryOffset;
 	HybridScrollFrame_Update(scroll, numApplicants * height, nButtons * height);
+
+	if GetPlayerInfoByGUID_Error then
+		C_Timer.After(0.5,self.update);
+	end
 end
 
 
@@ -331,10 +347,8 @@ function GuildApplicantTrackerMixin:Toggle(state)
 	self:SetShown(state);
 end
 
-function GuildApplicantTrackerMixin:ToggleOptions(snd)
-	if snd then
-		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
-	end
+function GuildApplicantTrackerMixin:ToggleOptions()
+	PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 	if ACD.OpenFrames[addon]~=nil then
 		ACD:Close(addon);
 	else
@@ -411,7 +425,7 @@ function GuildApplicantTrackerMixin:OnLoad()
 	EntryHeight = self.Scroll.buttons[1]:GetHeight();
 	self.Scroll:update();
 
-	self.Config:SetScript("OnClick",function(self) optionMenu(self,"TOPRIGHT","BOTTOMRIGHT") end);
+	self.Config:SetScript("OnClick",function(self) GuildApplicantTracker:ToggleOptions(); --[[optionMenu(self,"TOPRIGHT","BOTTOMRIGHT")]] end);
 	self.Config.tooltip ={
 		title = SETTINGS,
 		lines = {L["OptionsButtonTooltip"]}, -- "Click to open option menu"
