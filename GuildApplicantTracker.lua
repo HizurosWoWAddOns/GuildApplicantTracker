@@ -349,6 +349,7 @@ end
 
 function GuildApplicantTrackerMixin:ToggleOptions()
 	PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
+	local ACD = LibStub("AceConfigDialog-3.0");
 	if ACD.OpenFrames[addon]~=nil then
 		ACD:Close(addon);
 	else
