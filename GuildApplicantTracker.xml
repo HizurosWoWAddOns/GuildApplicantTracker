@@ -2,6 +2,9 @@
 ..\..\FrameXML\UI.xsd">
 
 	<Script file="localization.lua"/>
+	<!--@do-not-package@-->
+	<Script file="localizations.workfile.lua"/>
+	<!--@end-do-not-package@-->
 	<Script file="GuildApplicantTracker.lua"/>
 	<Script file="chatcommand.lua" />
 

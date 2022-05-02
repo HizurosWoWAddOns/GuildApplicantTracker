@@ -25,12 +25,12 @@ local db_defaults = {
 --[[ print functions ]]
 do
 	local addon_short = "GAT";
-	local colors = {"0099ff","00ff00","ff6060","44ffff","ffff00","ff8800","ff44ff","ffffff"};
+	local colors = {"82c5ff","00ff00","ff6060","44ffff","ffff00","ff8800","ff44ff","ffffff"};
 	local function colorize(...)
 		local t,c,a1 = {tostringall(...)},1,...;
 		if type(a1)=="boolean" then tremove(t,1); end
 		if a1~=false then
-			tinsert(t,1,"|cff0099ff"..((a1==true and addon_short) or (a1=="||" and "||") or addon).."|r"..(a1~="||" and HEADER_COLON or ""));
+			tinsert(t,1,"|cff82c5ff"..((a1==true and addon_short) or (a1=="||" and "||") or addon).."|r"..(a1~="||" and HEADER_COLON or ""));
 			c=2;
 		end
 		for i=c, #t do
@@ -391,7 +391,7 @@ function GuildApplicantTrackerMixin:OnEvent(event,msg,...)
 			GuildApplicantTrackerDB.PopupIfOnlineApps = nil;
 		end
 
-		if GuildApplicantTrackerDB.showAddOnLoaded then
+		if GuildApplicantTrackerDB.showAddOnLoaded or IsShiftKeyDown() then
 			ns.print(L["AddonLoaded"]);
 		end
 	elseif event=="PLAYER_LOGIN" or event=="GAT_DUMMY_EVENT" then
@@ -490,7 +490,7 @@ local options = {
 		},
 		showAddonLoaded = {
 			type = "toggle", order = 1, width = "double",
-			name = L["AddOnLoaded"], desc = L["AddOnLoadedDesc"]
+			name = L["AddOnLoaded"], desc = L["AddOnLoadedDesc"].."|n|n|cff44ff44"..L["AddOnLoadedDescAlt"].."|r"
 		},
 		minimap = {
 			type = "toggle", order = 2, width = "double",
