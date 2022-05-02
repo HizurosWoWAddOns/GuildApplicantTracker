@@ -1,4 +1,4 @@
-## Interface: 90005
+## Interface: 90200
 ## Title: Guild Applicant Tracker
 ## Notes: An addon to close the hole between guilds and guild applicants...
 ## Author: Hizuro
