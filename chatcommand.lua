@@ -17,14 +17,14 @@ SlashCmdList["GUILDAPPLICANTTRACKER"] = function(cmd)
 	elseif cmd=="resetframe" then
 		GuildApplicantTracker:ResetFrame();
 	else
-		ns.print(L["CLHeader"]); -- Commandline options
-		ns.print(true,"   "..L["CLUsage"]); -- Usage: /gat <command>
-		ns.print(true,L["CLCmds"]);
-		ns.print(true,"   toggle","-",       L["CLToggleDesc"]); -- Show/Hide tracker frame
-		ns.print(true,"   options","-",      L["CLOptionsDesc"]); -- Show/Hide option panel
-		ns.print(true,"   minimap","-",      L["CLMinimapDesc"]); -- Show/Hide minimap button
-		ns.print(true,"   resetsettings","-",L["CLResetSettingsDesc"]); -- Reset addon settings
-		ns.print(true,"   resetframe","-",   L["CLResetFrameDesc"]); -- Reset frame position
+		ns:print(L["CLHeader"]); -- Commandline options
+		ns:print(true,"   "..L["CLUsage"]); -- Usage: /gat <command>
+		ns:print(true,L["CLCmds"]);
+		ns:print(true,"   toggle","-",       L["CLToggleDesc"]); -- Show/Hide tracker frame
+		ns:print(true,"   options","-",      L["CLOptionsDesc"]); -- Show/Hide option panel
+		ns:print(true,"   minimap","-",      L["CLMinimapDesc"]); -- Show/Hide minimap button
+		ns:print(true,"   resetsettings","-",L["CLResetSettingsDesc"]); -- Reset addon settings
+		ns:print(true,"   resetframe","-",   L["CLResetFrameDesc"]); -- Reset frame position
 	end
 end
 
