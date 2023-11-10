@@ -53,11 +53,6 @@
 			<Anchor point="LEFT" />
 			<Anchor point="RIGHT" />
 		</Anchors>
-		<Backdrop bgFile="Interface\Buttons\UI-SliderBar-Background" tile="true">
-			<EdgeSize val="8"/>
-			<TileSize val="8"/>
-			<BackgroundInsets left="0" right="0" top="0" bottom="0"/>
-		</Backdrop>
 		<Layers>
 			<Layer level="BORDER">
 				<Texture parentKey="Class" file="Interface\WorldStateFrame\Icons-Classes">
