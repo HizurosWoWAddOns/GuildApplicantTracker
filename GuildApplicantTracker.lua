@@ -367,6 +367,8 @@ function GuildApplicantTrackerMixin:OnEvent(event,msg,...)
 			GuildApplicantTrackerDB.PopupIfOnlineApps = nil;
 		end
 
+		aceOptionsInit();
+
 		if GuildApplicantTrackerDB.showAddOnLoaded or IsShiftKeyDown() then
 			ns:print(L["AddonLoaded"]);
 		end
@@ -380,7 +382,6 @@ function GuildApplicantTrackerMixin:OnEvent(event,msg,...)
 		end
 
 		dataBrokerInit();
-		aceOptionsInit();
 
 		if C_ClubFinder.IsEnabled() then
 			C_ClubFinder.RequestSubscribedClubPostingIDs();
@@ -461,32 +462,36 @@ local options = {
 	end,
 	args = {
 		generalHeader = {
-			type = "header", order = 0,
-			name = GENERAL
-		},
-		showAddonLoaded = {
-			type = "toggle", order = 1, width = "double",
-			name = L["AddOnLoaded"], desc = L["AddOnLoadedDesc"].."|n|n|cff44ff44"..L["AddOnLoadedDescAlt"].."|r"
-		},
-		minimap = {
-			type = "toggle", order = 2, width = "double",
-			name = L["MinimapButton"], desc = L["MinimapButtonDesc"]
-		},
-		popupOnNew = {
-			type = "toggle", order = 3, width = "double",
-			name = L["PopupOnNew"], desc = L["PopupOnNewDesc"]
+			type = "group", order = 1, inline = true,
+			name = GENERAL,
+			args = {
+				showAddonLoaded = {
+					type = "toggle", order = 1, width = "double",
+					name = L["AddOnLoaded"], desc = L["AddOnLoadedDesc"].."|n|n|cff44ff44"..L["AddOnLoadedDescAlt"].."|r"
+				},
+				minimap = {
+					type = "toggle", order = 2, width = "double",
+					name = L["MinimapButton"], desc = L["MinimapButtonDesc"]
+				},
+				popupOnNew = {
+					type = "toggle", order = 3, width = "double",
+					name = L["PopupOnNew"], desc = L["PopupOnNewDesc"]
+				},
+			}
 		},
 		resetHeader = {
-			type = "header", order = 10,
-			name = L["ResetOptions"]
-		},
-		resetFrame = {
-			type = "execute", order = 11,
-			name = L["ResetFrame"], desc = L["ResetFrameDesc"]
-		},
-		resetConfig = {
-			type = "execute", order = 12,
-			name = L["ResetSettings"], desc = L["ResetSettingsDesc"]
+			type = "group", order = 10, inline = true,
+			name = L["ResetOptions"],
+			args = {
+				resetFrame = {
+					type = "execute", order = 11,
+					name = L["ResetFrame"], desc = L["ResetFrameDesc"]
+				},
+				resetConfig = {
+					type = "execute", order = 12,
+					name = L["ResetSettings"], desc = L["ResetSettingsDesc"]
+				},
+			}
 		},
 		credits = {
 			type = "group", order = 200, inline = true,
