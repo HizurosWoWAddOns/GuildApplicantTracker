@@ -10,6 +10,9 @@ local libDBIcon = LibStub("LibDBIcon-1.0");
 GuildApplicantTrackerMixin = {};
 local addon, ns = ...;
 local L = ns.L;
+ns.debugMode = "@project-version@"=="@".."project-version".."@";
+LibStub("HizurosSharedTools").RegisterPrint(ns,addon,"GAT");
+
 local guildClubId,applicantList,numApplicants,hasChanged,hasNewPlayer,aceOptionsInit = false,false,0,false,false;
 local EntryOffset,EntryHeight = 2;
 local db_defaults = {
@@ -20,33 +23,6 @@ local db_defaults = {
 	hideOnEmpty       = true,
 	knownGUIDs        = {},
 }
-
-
---[[ print functions ]]
-do
-	local addon_short = "GAT";
-	local colors = {"82c5ff","00ff00","ff6060","44ffff","ffff00","ff8800","ff44ff","ffffff"};
-	local function colorize(...)
-		local t,c,a1 = {tostringall(...)},1,...;
-		if type(a1)=="boolean" then tremove(t,1); end
-		if a1~=false then
-			tinsert(t,1,"|cff82c5ff"..((a1==true and addon_short) or (a1=="||" and "||") or addon).."|r"..(a1~="||" and HEADER_COLON or ""));
-			c=2;
-		end
-		for i=c, #t do
-			if not t[i]:find("\124c") then
-				t[i],c = "|cff"..colors[c]..t[i].."|r", c<#colors and c+1 or 1;
-			end
-		end
-		return unpack(t);
-	end
-	function ns.print(...)
-		print(colorize(...));
-	end
-	function ns.debug(...)
-		ConsolePrint(date("|cff999999%X|r"),colorize(...));
-	end
-end
 
 --[[ string coloring function ]]
 local colors = {ltblue="ff69ccf0",ltgreen="ff80ff80",ltyellow="fffff569",dkyellow="ffffcc00",copper="fff0a55f",gray="ff808080",green="ff00ff00",blue="ff0099ff"};
@@ -84,7 +60,7 @@ local function updateApplicants()
 		guildClubId = C_Club.GetGuildClubId()
 --@do-not-package@
 		if not guildClubId then
-			ns.debug("something goes wrong with the club API. IsInGuild is true but could not find a club with clubType 'guild'.");
+			ns:debug("something goes wrong with the club API. IsInGuild is true but could not find a club with clubType 'guild'.");
 			brokerText = "Err1"
 		end
 --@end-do-not-package@
@@ -95,7 +71,7 @@ local function updateApplicants()
 		applicantList = C_ClubFinder.ReturnClubApplicantList(guildClubId);
 --@do-not-package@
 		if not applicantList then
-			ns.debug("something goes wrong with the club API. applicantList is not a table. got "..type(applicantList));
+			ns:debug("something goes wrong with the club API. applicantList is not a table. got "..type(applicantList));
 			brokerText = "Err2"
 		end
 --@end-do-not-package@
@@ -150,7 +126,7 @@ local function dataBrokerInit()
 		local obj = libDataBroker:NewDataObject(addon, {
 			type          = "data source",
 			label         = L[addon],
-			icon          = "Interface\\Icons\\Achievement_boss_cthun",
+			icon          = 236407, --"Interface\\Icons\\Achievement_boss_cthun",
 			--OnEnter       = nil,
 			--OnLeave       = nil,
 			OnClick       = function(self,button)
@@ -331,7 +307,7 @@ end
 
 --[[ tracker frame functions mixin ]]
 function GuildApplicantTrackerMixin:ToggleOffline()
-	ns.print("'View offline applicants' is no longer an option");
+	ns:print("'View offline applicants' is no longer an option");
 end
 
 function GuildApplicantTrackerMixin:ToggleMinimap()
@@ -392,7 +368,7 @@ function GuildApplicantTrackerMixin:OnEvent(event,msg,...)
 		end
 
 		if GuildApplicantTrackerDB.showAddOnLoaded or IsShiftKeyDown() then
-			ns.print(L["AddonLoaded"]);
+			ns:print(L["AddonLoaded"]);
 		end
 	elseif event=="PLAYER_LOGIN" or event=="GAT_DUMMY_EVENT" then
 		guildClubId = C_Club.GetGuildClubId()
@@ -511,6 +487,12 @@ local options = {
 		resetConfig = {
 			type = "execute", order = 12,
 			name = L["ResetSettings"], desc = L["ResetSettingsDesc"]
+		},
+		credits = {
+			type = "group", order = 200, inline = true,
+			name = L["Credits"],
+			args = {
+			}
 		}
 	}
 };
@@ -518,4 +500,5 @@ local options = {
 function aceOptionsInit()
 	LibStub("AceConfig-3.0"):RegisterOptionsTable(addon, options);
 	LibStub("AceConfigDialog-3.0"):AddToBlizOptions(addon);
+	LibStub("HizurosSharedTools").AddCredit(addon,options.args.credits.args);
 end
