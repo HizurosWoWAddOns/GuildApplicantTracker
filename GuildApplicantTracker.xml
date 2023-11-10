@@ -180,11 +180,6 @@
 							<Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPRIGHT" x="3" />
 							<Anchor point="BOTTOMLEFT" relativeTo="$parent" relativePoint="BOTTOMRIGHT" x="3" />
 						</Anchors>
-						<Backdrop bgFile="Interface\Buttons\UI-SliderBar-Background" edgeFile="Interface\Buttons\UI-SliderBar-Border" tile="true">
-							<EdgeSize val="8" />
-							<TileSize val="8" />
-							<BackgroundInsets left="3" right="3" top="3" bottom="3" />
-						</Backdrop>
 						<ThumbTexture parentKey="thumbTexture" file="Interface\Buttons\UI-SliderBar-Button-Vertical" />
 						<Scripts>
 							<OnValueChanged function="HybridScrollFrame_OnValueChanged"/>
