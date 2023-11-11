@@ -32,10 +32,6 @@ externals:
         url: https://github.com/HizurosWoWAddOns/LibColors-1.0.git
         tag: latest
 
-# missing externals on addon page
-required-dependencies:
-    - libstringcoloring-1-0
-
 enable-nolib-creation: no
 
 ignore:
