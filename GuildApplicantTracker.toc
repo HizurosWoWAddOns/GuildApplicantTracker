@@ -1,4 +1,4 @@
-## Interface: 110000
+## Interface: 110002
 ## Title: Guild Applicant Tracker
 ## Notes: An addon to close the hole between guilds and guild applicants...
 ## IconTexture: 236407
