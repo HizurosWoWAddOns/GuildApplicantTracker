@@ -223,6 +223,10 @@ local function buttonIconUpdate(button,icon,bool)
 	end
 end
 
+local function scrollUpdate()
+	GuildApplicantTrackerContainer:update()
+end
+
 function GuildApplicantTrackerListMixin:update()
 	local scroll = GuildApplicantTrackerContainer;
 	local button, index, offset, nButtons, applicant, GetPlayerInfoByGUID_Error;
@@ -300,7 +304,7 @@ function GuildApplicantTrackerListMixin:update()
 	HybridScrollFrame_Update(scroll, numApplicants * height, nButtons * height);
 
 	if GetPlayerInfoByGUID_Error then
-		C_Timer.After(0.5,self.update);
+		C_Timer.After(0.5,scrollUpdate);
 	end
 end
 
@@ -347,7 +351,7 @@ function GuildApplicantTrackerMixin:ResetFrame()
 end
 
 function GuildApplicantTrackerMixin:OnShow()
-	self.Scroll:update();
+	scrollUpdate();
 end
 
 function GuildApplicantTrackerMixin:OnEvent(event,msg,...)
@@ -391,6 +395,7 @@ function GuildApplicantTrackerMixin:OnEvent(event,msg,...)
 		if GuildApplicantTrackerDB.frameShow then
 			self:Show();
 		end
+		C_Timer.After(20,scrollUpdate);
 	elseif event=="CLUB_FINDER_RECRUIT_LIST_CHANGED" or event=="CLUB_FINDER_RECRUITS_UPDATED" then -- triggered by C_ClubFinder.RequestApplicantList and C_ClubFinder.RequestSubscribedClubPostingIDs
 		updateApplicants();
 	end
@@ -401,7 +406,7 @@ function GuildApplicantTrackerMixin:OnLoad()
 
 	HybridScrollFrame_CreateButtons(self.Scroll, "GuildApplicantTrackerEntryTemplate", 0, 0, nil, nil, 0, -EntryOffset);
 	EntryHeight = self.Scroll.buttons[1]:GetHeight();
-	self.Scroll:update();
+	scrollUpdate(); -- too early?
 
 	self.Config:SetScript("OnClick",function(self) GuildApplicantTracker:ToggleOptions(); --[[optionMenu(self,"TOPRIGHT","BOTTOMRIGHT")]] end);
 	self.Config.tooltip ={
