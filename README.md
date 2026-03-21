@@ -1,5 +1,5 @@
 # GuildApplicantTracker (WoW AddOn)
-![Build](https://github.com/HizurosWoWAddOns/GuildApplicantTracker/actions/workflows/bigwigsmods-packager.yml/badge.svg)
+![Build](https://img.shields.io/github/actions/workflow/status/HizurosWoWAddOns/GuildApplicantTracker/packager.yml?style=flat-square)
 ![Tag](https://img.shields.io/github/v/tag/HizurosWoWAddOns/GuildApplicantTracker?style=flat-square)
 ![Downloads](https://img.shields.io/github/downloads/HizurosWoWAddOns/GuildApplicantTracker/total?style=flat-square)
 ![Downloads](https://img.shields.io/github/downloads/HizurosWoWAddOns/GuildApplicantTracker/latest/total?style=flat-square)
