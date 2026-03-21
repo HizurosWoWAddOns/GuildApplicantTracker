@@ -13,7 +13,7 @@ local L = ns.L;
 ns.debugMode = "@project-version@"=="@".."project-version".."@";
 LibStub("HizurosSharedTools").RegisterPrint(ns,addon,"GAT");
 
-local guildClubId,applicantList,numApplicants,hasChanged,hasNewPlayer,aceOptionsInit = false,false,0,false,false;
+local guildClubId,applicantList,numApplicants,hasChanged,hasNewPlayer,aceOptionsInit = nil,nil,0,nil,nil;
 local EntryOffset,EntryHeight = 2;
 local db_defaults = {
 	showAddonLoaded   = true,
@@ -26,7 +26,7 @@ local db_defaults = {
 
 --[[ string coloring function ]]
 local colors = {ltblue="ff69ccf0",ltgreen="ff80ff80",ltyellow="fffff569",dkyellow="ffffcc00",copper="fff0a55f",gray="ff808080",green="ff00ff00",blue="ff0099ff"};
-for n, c in pairs(CUSTOM_CLASS_COLORS or RAID_CLASS_COLORS) do
+for n, c in pairs(_G["CUSTOM_CLASS_COLORS"] or _G["RAID_CLASS_COLORS"]) do
 	colors[n:upper()] = c.colorStr;
 end
 local function C(color,str)
@@ -116,7 +116,7 @@ local function updateApplicants()
 		brokerText = num;
 	end
 
-	(libDataBroker:GetDataObjectByName(addon) or {}).text = C("dkyellow",brokerText);
+	libDataBroker:GetDataObjectByName(addon).text = C("dkyellow",brokerText);
 end
 
 
@@ -138,10 +138,11 @@ local function dataBrokerInit()
 			end,
 			--OnDoubleClick = nil,
 			OnTooltipShow = function(tt)
-				if applicantList then
-					tt:AddDoubleLine(addon,#applicantList);
+				if type(applicantList)=="table" then
+					local num = #applicantList;
+					tt:AddDoubleLine(addon,tostring(num));
 					tt:AddLine(" ");
-					for i=1, #applicantList do
+					for i=1, num do
 						local localizedClass, englishClass, localizedRace, englishRace, sex, playerName, realm = GetPlayerInfoByGUID(applicantList[i].playerGUID);
 						tt:AddDoubleLine(C(englishClass:upper(),applicantList[i].name),C("dkyellow",realm or GetRealmName()));
 					end
@@ -264,8 +265,9 @@ function GuildApplicantTrackerListMixin:update()
 				local ttLines = {
 					UNIT_TYPE_LEVEL_TEMPLATE:format(applicant.level, localizedClass),
 					" ",
-					CLUB_FINDER_SPECIALIZATIONS,
-					(applicant.message and applicant.message:trim()~="") or C("gray",L["No comment..."])
+					(applicant.message and applicant.message:trim()~="") or C("gray",L["No comment..."]),
+					" ",
+					CLUB_FINDER_SPECIALIZATIONS
 				};
 
 				if #applicant.specIds == 0 then
@@ -408,7 +410,7 @@ function GuildApplicantTrackerMixin:OnLoad()
 	EntryHeight = self.Scroll.buttons[1]:GetHeight();
 	scrollUpdate(); -- too early?
 
-	self.Config:SetScript("OnClick",function(self) GuildApplicantTracker:ToggleOptions(); --[[optionMenu(self,"TOPRIGHT","BOTTOMRIGHT")]] end);
+	self.Config:SetScript("OnClick",function() GuildApplicantTracker:ToggleOptions(); --[[optionMenu(self,"TOPRIGHT","BOTTOMRIGHT")]] end);
 	self.Config.tooltip ={
 		title = SETTINGS,
 		lines = {L["OptionsButtonTooltip"]}, -- "Click to open option menu"
