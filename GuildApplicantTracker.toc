@@ -1,11 +1,25 @@
-## Interface: 110007
+## Interface: 120001
 ## Title: Guild Applicant Tracker
 ## Notes: An addon to close the hole between guilds and guild applicants...
 ## IconTexture: 236407
 ## Author: Hizuro
 ## Version: @project-version@
+
 ## SavedVariables: GuildApplicantTrackerDB
 ## OptionalDeps: LibStub, CallbackHandler-1.0, LibDataBroker-1.1, LibDBIcon-1.0, Ace3
+
+## Category: Guild
+## Category-deDE: Gilde
+## Category-esES: Hermandad
+## Category-esMX: Hermandad
+## Category-frFR: Guilde
+## Category-itIT: Gilda
+## Category-koKR: 길드
+## Category-ptBR: Guilda
+## Category-ptPT: Guilda
+## Category-ruRU: Гильдия
+## Category-zhCN: 公会
+## Category-zhTW: 公會
 
 ## X-Curse-Project-ID: 85029
 
