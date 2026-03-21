@@ -22,6 +22,7 @@ local db_defaults = {
 	popupOnNew        = true,
 	hideOnEmpty       = true,
 	knownGUIDs        = {},
+	applicantsBrokerLabel = true,
 }
 
 --[[ string coloring function ]]
@@ -113,7 +114,7 @@ local function updateApplicants()
 		end
 
 		numApplicants = num;
-		brokerText = num;
+		brokerText = (GuildApplicantTrackerDB.applicantsBrokerLabel and CLUB_FINDER_APPLICANTS..HEADER_COLON.." " or "")..num;
 	end
 
 	libDataBroker:GetDataObjectByName(addon).text = C("dkyellow",brokerText);
@@ -483,6 +484,10 @@ local options = {
 				popupOnNew = {
 					type = "toggle", order = 3, width = "double",
 					name = L["PopupOnNew"], desc = L["PopupOnNewDesc"]
+				},
+				applicantsBrokerLabel = {
+					type = "toggle", order = 4, width = "double",
+					name = L["ApplicantsBrokerLabel"], desc = L["ApplicantsBrokerLabelDesc"]
 				},
 			}
 		},
